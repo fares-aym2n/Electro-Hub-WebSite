@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Rounded Base Badge in Brand Terracotta -->
+  <rect width="64" height="64" rx="16" fill="#111111" />
+  
+  <!-- Subtle Inner Border -->
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="#C49B82" stroke-width="2" stroke-opacity="0.3" fill="none" />
+  
+  <!-- Stylized Electronic Pulse / E Emblem in Terracotta -->
+  <path d="M18 20H46C47.1 20 48 20.9 48 22V24C48 25.1 47.1 26 46 26H28V30H40C41.1 30 42 30.9 42 32V34C42 35.1 41.1 36 40 36H28V40H46C47.1 40 48 40.9 48 42V44C48 45.1 47.1 46 46 46H20C18.9 46 18 45.1 18 44V20Z" fill="#CCA893"/>
+  
+  <!-- Tech Circuit Nodes -->
+  <circle cx="46" cy="23" r="3" fill="#FBF6F0" />
+  <circle cx="40" cy="33" r="3" fill="#FBF6F0" />
+  <circle cx="46" cy="43" r="3" fill="#FBF6F0" />
+  <circle cx="18" cy="33" r="3.5" fill="#C49B82" />
+</svg>

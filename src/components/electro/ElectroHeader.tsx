@@ -1,0 +1,395 @@
+import type { FC } from 'react';
+import { useState } from 'react';
+import { Menu, X, LogOut, User as UserIcon, Settings, KeyRound, Lock } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
+import { useNavigation } from '../../context/NavigationContext';
+export type { PageId } from '../../context/NavigationContext';
+import { EditProfileModal } from '../profile/EditProfileModal';
+import { ChangePasswordModal } from '../profile/ChangePasswordModal';
+
+interface ElectroHeaderProps {
+  cartCount?: number;
+}
+
+export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  const { user, logout } = useAuth();
+  const { totalItems } = useCart();
+  const { activePage, navigate, scrollToSection } = useNavigation();
+
+  const cartCount = propCartCount !== undefined ? propCartCount : totalItems;
+
+  const handleLogout = () => {
+    logout();
+    setAccountMenuOpen(false);
+    navigate('home');
+  };
+
+  const handleProductsClick = () => {
+    if (activePage === 'home') {
+      scrollToSection('products-section');
+    } else {
+      navigate('home', { scrollTo: 'products-section' });
+    }
+  };
+
+  const handleCategoriesClick = () => {
+    if (activePage === 'home') {
+      scrollToSection('categories-section');
+    } else {
+      navigate('home', { scrollTo: 'categories-section' });
+    }
+  };
+
+  return (
+    <>
+      <header className="bg-[#EFE0D3] border-b border-[#E5D7CA] text-[#111111] select-none sticky top-0 z-40">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 h-[68px] flex items-center justify-between">
+          
+          {/* Brand Logo */}
+          <div
+            onClick={() => navigate('home')}
+            className="text-[22px] font-bold tracking-tight text-[#111111] cursor-pointer hover:opacity-80 transition shrink-0"
+          >
+            Electro Hub
+          </div>
+
+          {/* Center Navigation Links: HOME, PRODUCTS, CATEGORIES, ABOUT US, CONTACT US */}
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-[13px] font-semibold tracking-[0.06em] uppercase">
+            <button
+              onClick={() => navigate('home')}
+              className={`transition hover:text-[#C49B82] ${
+                activePage === 'home' ? 'text-[#C49B82]' : 'text-[#111111]'
+              }`}
+            >
+              HOME
+            </button>
+
+            {/* Replaces Deals, New Arrivals & Support per Requirement 6 */}
+            <button
+              onClick={handleProductsClick}
+              className="text-[#111111] hover:text-[#C49B82] transition"
+            >
+              PRODUCTS
+            </button>
+
+            <button
+              onClick={handleCategoriesClick}
+              className="text-[#111111] hover:text-[#C49B82] transition"
+            >
+              CATEGORIES
+            </button>
+
+            <button
+              onClick={() => navigate('about')}
+              className={`transition hover:text-[#C49B82] ${
+                activePage === 'about' ? 'text-[#C49B82]' : 'text-[#111111]'
+              }`}
+            >
+              ABOUT US
+            </button>
+
+            <button
+              onClick={() => navigate('contact')}
+              className={`transition hover:text-[#C49B82] ${
+                activePage === 'contact' ? 'text-[#C49B82]' : 'text-[#111111]'
+              }`}
+            >
+              CONTACT US
+            </button>
+          </nav>
+
+          {/* Right Utility Navigation */}
+          <div className="hidden sm:flex items-center gap-5 lg:gap-7 text-[13px] font-semibold tracking-[0.06em] uppercase">
+            <button
+              onClick={() => {
+                if (activePage === 'home') {
+                  scrollToSection('search-filter-bar');
+                } else {
+                  navigate('home', { scrollTo: 'search-filter-bar' });
+                }
+              }}
+              className="text-[#111111] hover:text-[#C49B82] transition"
+            >
+              SEARCH
+            </button>
+
+            {/* When NOT Authenticated: Show Sign In & Sign Up */}
+            {!user ? (
+              <>
+                <button
+                  onClick={() => navigate('signin')}
+                  className={`transition hover:text-[#C49B82] ${
+                    activePage === 'signin' ? 'text-[#C49B82]' : 'text-[#111111]'
+                  }`}
+                >
+                  SIGN IN
+                </button>
+                <button
+                  onClick={() => navigate('signup')}
+                  className={`px-3 py-1.5 rounded-lg border border-[#C49B82] hover:bg-[#CCA893] hover:text-[#111111] transition ${
+                    activePage === 'signup'
+                      ? 'bg-[#CCA893] text-[#111111]'
+                      : 'text-[#111111]'
+                  }`}
+                >
+                  SIGN UP
+                </button>
+              </>
+            ) : (
+              /* When Authenticated: Profile Icon Button */
+              <div className="relative">
+                <button
+                  onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                  className="flex items-center gap-2 py-1 px-2.5 rounded-full hover:bg-[#FAF6F2]/80 transition text-[#111111] border border-[#DFD4C8]"
+                  title="My Account"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#FAF6F2] border border-[#C49B82]/60 overflow-hidden flex items-center justify-center shrink-0">
+                    {user.profile_image ? (
+                      <img
+                        src={user.profile_image}
+                        alt={user.username}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon className="w-4 h-4 text-[#C49B82]" />
+                    )}
+                  </div>
+                  <span className="text-xs font-bold truncate max-w-[100px]">
+                    {user.username}
+                  </span>
+                </button>
+
+                {/* Account Menu Dropdown / Panel */}
+                {accountMenuOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setAccountMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-72 bg-[#FAF6F2] border border-[#DFD4C8] rounded-2xl shadow-xl py-3 z-50 normal-case animate-in fade-in duration-150">
+                      {/* User Info Header */}
+                      <div className="px-5 py-3 border-b border-[#DFD4C8]/70">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full bg-[#EEE9E5] border border-[#C49B82]/60 overflow-hidden flex items-center justify-center shrink-0">
+                            {user.profile_image ? (
+                              <img
+                                src={user.profile_image}
+                                alt={user.username}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <UserIcon className="w-6 h-6 text-[#C49B82]" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-sm text-[#111111] truncate">
+                              {user.username}
+                            </div>
+                            <div className="text-xs text-[#666666] truncate flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-[#C49B82] shrink-0" />
+                              <span className="truncate">{user.email}</span>
+                            </div>
+                            {user.role === 'admin' && (
+                              <span className="inline-block mt-1 text-[10px] font-bold bg-[#CCA893] text-[#111111] px-1.5 py-0.5 rounded uppercase">
+                                Verified Admin
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="py-2 px-2 space-y-1 text-xs">
+                        <button
+                          onClick={() => {
+                            setAccountMenuOpen(false);
+                            setIsEditProfileOpen(true);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-[#111111] hover:bg-[#EEE9E5] flex items-center gap-2.5 font-medium transition"
+                        >
+                          <Settings className="w-4 h-4 text-[#C49B82]" />
+                          Edit Profile
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAccountMenuOpen(false);
+                            setIsChangePasswordOpen(true);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-[#111111] hover:bg-[#EEE9E5] flex items-center gap-2.5 font-medium transition"
+                        >
+                          <KeyRound className="w-4 h-4 text-[#C49B82]" />
+                          Change Password
+                        </button>
+                      </div>
+
+                      <div className="border-t border-[#DFD4C8]/70 pt-1 px-2">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-medium transition text-xs"
+                        >
+                          <LogOut className="w-4 h-4 text-red-500" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Shopping Cart Button */}
+            <button
+              onClick={() => navigate('checkout')}
+              className={`transition hover:text-[#C49B82] ${
+                activePage === 'checkout' ? 'text-[#C49B82]' : 'text-[#111111]'
+              }`}
+            >
+              CART {cartCount > 0 ? `(${cartCount})` : ''}
+            </button>
+          </div>
+
+          {/* Mobile Hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 text-[#111111] hover:text-[#C49B82]"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        {/* Mobile Drawer */}
+        {mobileOpen && (
+          <div className="md:hidden bg-[#EFE0D3] border-t border-[#E5D7CA] px-6 py-6 space-y-4 text-xs font-semibold tracking-wider uppercase">
+            <button
+              onClick={() => {
+                navigate('home');
+                setMobileOpen(false);
+              }}
+              className="block w-full text-left py-2 hover:text-[#C49B82]"
+            >
+              HOME
+            </button>
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                handleProductsClick();
+              }}
+              className="block w-full text-left py-2 hover:text-[#C49B82]"
+            >
+              PRODUCTS
+            </button>
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                handleCategoriesClick();
+              }}
+              className="block w-full text-left py-2 hover:text-[#C49B82]"
+            >
+              CATEGORIES
+            </button>
+            <button
+              onClick={() => {
+                navigate('about');
+                setMobileOpen(false);
+              }}
+              className="block w-full text-left py-2 hover:text-[#C49B82]"
+            >
+              ABOUT US
+            </button>
+            <button
+              onClick={() => {
+                navigate('contact');
+                setMobileOpen(false);
+              }}
+              className="block w-full text-left py-2 hover:text-[#C49B82]"
+            >
+              CONTACT US
+            </button>
+
+            {user ? (
+              <div className="pt-3 border-t border-[#DFD4C8] space-y-2">
+                <div className="text-xs text-[#666666] lowercase">
+                  Signed in as <strong className="text-[#111111]">{user.username}</strong> ({user.email})
+                </div>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setIsEditProfileOpen(true);
+                  }}
+                  className="block w-full text-left py-1 text-[#111111] hover:text-[#C49B82]"
+                >
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setIsChangePasswordOpen(true);
+                  }}
+                  className="block w-full text-left py-1 text-[#111111] hover:text-[#C49B82]"
+                >
+                  Change Password
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left py-1 text-red-600 font-bold"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="pt-3 border-t border-[#DFD4C8] flex gap-3">
+                <button
+                  onClick={() => {
+                    navigate('signin');
+                    setMobileOpen(false);
+                  }}
+                  className="py-2 text-[#111111] hover:text-[#C49B82]"
+                >
+                  SIGN IN
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('signup');
+                    setMobileOpen(false);
+                  }}
+                  className="py-2 text-[#C49B82] font-bold"
+                >
+                  SIGN UP
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                navigate('checkout');
+                setMobileOpen(false);
+              }}
+              className="block w-full text-left py-2 hover:text-[#C49B82] border-t border-[#DFD4C8] pt-3"
+            >
+              CART {cartCount > 0 ? `(${cartCount})` : ''}
+            </button>
+          </div>
+        )}
+      </header>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+      />
+    </>
+  );
+};
