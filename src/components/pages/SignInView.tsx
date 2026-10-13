@@ -131,7 +131,9 @@ export const SignInView: FC<SignInViewProps> = ({
       <div className="max-w-[1400px] mx-auto w-full px-6 sm:px-10 lg:px-14">
         {/* Back Button */}
         <div>
-          <BackButton label={mode === "signin" ? "Back to Store" : "Back to Sign In"} />
+          <BackButton
+            label={mode === "signin" ? "Back to Store" : "Back to Sign In"}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
@@ -163,7 +165,8 @@ export const SignInView: FC<SignInViewProps> = ({
                     Welcome back
                   </h1>
                   <p className="text-[14px] text-[#555555] mt-1 leading-relaxed">
-                    Sign in with your email and password to access your Electro Hub account.
+                    Sign in with your email and password to access your Electro
+                    Hub account.
                   </p>
                 </div>
 
@@ -190,7 +193,8 @@ export const SignInView: FC<SignInViewProps> = ({
                       Authenticated Successfully!
                     </div>
                     <p className="text-xs text-[#444444]">
-                      Welcome back. Profile token verified with live backend. Redirecting...
+                      Welcome back. Profile token verified with live backend.
+                      Redirecting...
                     </p>
                   </div>
                 ) : (
@@ -205,7 +209,7 @@ export const SignInView: FC<SignInViewProps> = ({
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="email@example.com"
+                        placeholder="email"
                         className="w-full h-[46px] rounded-lg bg-[#FAF6F2] border border-[#DFD4C8] px-4 text-sm text-[#111111] placeholder:text-[#999999] focus:outline-none focus:border-[#C49B82] transition"
                       />
                     </div>
@@ -216,14 +220,6 @@ export const SignInView: FC<SignInViewProps> = ({
                         <label className="block text-[12px] font-bold text-[#111111] uppercase tracking-[0.05em]">
                           PASSWORD
                         </label>
-                        {/* 1. Forgot Password Button beside label */}
-                        <button
-                          type="button"
-                          onClick={() => switchMode("forgot")}
-                          className="text-[12px] font-bold text-[#C49B82] hover:text-[#111111] hover:underline transition cursor-pointer"
-                        >
-                          Forgot Password?
-                        </button>
                       </div>
                       <input
                         type="password"
@@ -260,18 +256,6 @@ export const SignInView: FC<SignInViewProps> = ({
                     <div className="text-center pt-4 space-y-2.5 border-t border-[#EAE0D5] mt-5">
                       <div>
                         <span className="text-[13px] text-[#555555]">
-                          Can't remember your password?{" "}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => switchMode("forgot")}
-                          className="text-[13px] font-bold text-[#C49B82] hover:underline transition cursor-pointer"
-                        >
-                          Reset Password
-                        </button>
-                      </div>
-                      <div>
-                        <span className="text-[13px] text-[#555555]">
                           Don't have an account?{" "}
                         </span>
                         <button
@@ -299,7 +283,8 @@ export const SignInView: FC<SignInViewProps> = ({
                     Forgot Password
                   </h1>
                   <p className="text-[14px] text-[#555555] mt-1 leading-relaxed">
-                    Enter your registered email address and we'll send you a link to reset your password.
+                    Enter your registered email address and we'll send you a
+                    link to reset your password.
                   </p>
                 </div>
 
@@ -329,7 +314,8 @@ export const SignInView: FC<SignInViewProps> = ({
                       {forgotSuccess}
                     </p>
                     <p className="text-xs text-[#555555] leading-relaxed">
-                      Please check your inbox and click the password reset link to choose your new password.
+                      Please check your inbox and click the password reset link
+                      to choose your new password.
                     </p>
                     <div className="pt-2">
                       <button
@@ -368,8 +354,12 @@ export const SignInView: FC<SignInViewProps> = ({
                       disabled={forgotLoading}
                       className="w-full h-[46px] rounded-lg bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase transition active:scale-98 shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-2"
                     >
-                      {forgotLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                      {forgotLoading ? "SENDING RESET LINK..." : "SEND RESET LINK"}
+                      {forgotLoading && (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      )}
+                      {forgotLoading
+                        ? "SENDING RESET LINK..."
+                        : "SEND RESET LINK"}
                     </button>
 
                     {/* Back to Sign In Link */}

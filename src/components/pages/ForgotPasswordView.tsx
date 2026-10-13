@@ -7,7 +7,7 @@ import { BackButton } from "../common/BackButton";
 
 interface ForgotPasswordViewProps {
   onNavigate: (page: PageId) => void;
-}
+}[]
 
 export const ForgotPasswordView: FC<ForgotPasswordViewProps> = ({ onNavigate }) => {
   const [email, setEmail] = useState<string>("");
