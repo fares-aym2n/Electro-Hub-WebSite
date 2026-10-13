@@ -124,7 +124,7 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
             </label>
             <div className="relative">
               <input
-                type={showCurrent ? 'text' : 'password'}
+                type={showCurrent ? "text" : "password"}
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -136,7 +136,11 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
                 onClick={() => setShowCurrent(!showCurrent)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#111111] p-1"
               >
-                {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showCurrent ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -148,12 +152,12 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
             </label>
             <div className="relative">
               <input
-                type={showNew ? 'text' : 'password'}
+                type={showNew ? "text" : "password"}
                 required
                 minLength={5}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 5 characters"
+                placeholder="password"
                 className="w-full h-11 rounded-xl bg-[#FAF6F2] border border-[#DFD4C8] px-4 pr-11 text-xs sm:text-sm text-[#111111] placeholder:text-[#999999] focus:outline-none focus:border-[#C49B82] transition"
               />
               <button
@@ -161,7 +165,11 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
                 onClick={() => setShowNew(!showNew)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#111111] p-1"
               >
-                {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showNew ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -173,11 +181,11 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
             </label>
             <div className="relative">
               <input
-                type={showConfirm ? 'text' : 'password'}
+                type={showConfirm ? "text" : "password"}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
+                placeholder="confirm password"
                 className="w-full h-11 rounded-xl bg-[#FAF6F2] border border-[#DFD4C8] px-4 pr-11 text-xs sm:text-sm text-[#111111] placeholder:text-[#999999] focus:outline-none focus:border-[#C49B82] transition"
               />
               <button
@@ -185,7 +193,11 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] hover:text-[#111111] p-1"
               >
-                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirm ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -205,7 +217,7 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
               className="px-6 py-2.5 rounded-lg bg-[#CCA893] hover:bg-[#C29D87] text-[#111111] font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition disabled:opacity-50"
             >
               {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {loading ? 'Updating...' : 'Update Password'}
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>

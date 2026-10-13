@@ -4,6 +4,11 @@ import type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  ValidateResetLinkResponse,
   ApiUser,
 } from '../types/api';
 
@@ -24,6 +29,33 @@ export const authService = {
    */
   async register(userData: RegisterRequest): Promise<RegisterResponse> {
     return apiClient.post<RegisterResponse>('/api/users/auth/register', userData);
+  },
+
+  /**
+   * Send password reset link to user's email
+   */
+  async forgotPassword(data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
+    return apiClient.post<ForgotPasswordResponse>('/api/users/auth/forgot-password', data);
+  },
+
+  /**
+   * Validate password reset link
+   * GET /api/users/auth/reset-password/:userId/:resetPasswordToken
+   */
+  async validateResetPasswordLink(
+    userId: number,
+    resetPasswordToken: string
+  ): Promise<ValidateResetLinkResponse> {
+    return apiClient.get<ValidateResetLinkResponse>(
+      `/api/users/auth/reset-password/${userId}/${encodeURIComponent(resetPasswordToken)}`
+    );
+  },
+
+  /**
+   * Reset user password using userId and resetPasswordToken
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    return apiClient.post<ResetPasswordResponse>('/api/users/auth/reset-password', data);
   },
 
   /**

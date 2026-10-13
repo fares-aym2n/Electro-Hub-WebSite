@@ -86,6 +86,28 @@ export interface RegisterResponse {
   message: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordRequest {
+  userId: number;
+  resetPasswordToken: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message?: string;
+}
+
+export interface ValidateResetLinkResponse {
+  message?: string;
+}
+
 export interface CreateReviewRequest {
   review: string;
   rating: number;

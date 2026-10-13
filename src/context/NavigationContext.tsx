@@ -8,18 +8,24 @@ export type PageId =
   | 'checkout'
   | 'review'
   | 'about'
-  | 'contact';
+  | 'contact'
+  | 'forgot-password'
+  | 'reset-password';
 
-interface NavigationState {
+export interface NavigationState {
   page: PageId;
   productId?: number;
   category?: string;
+  resetUserId?: number;
+  resetPasswordToken?: string;
 }
 
-interface NavigationContextType {
+export interface NavigationContextType {
   activePage: PageId;
   selectedProductId: number;
   activeCategory: string;
+  resetUserId?: number;
+  resetPasswordToken?: string;
   setActiveCategory: (cat: string) => void;
   navigate: (
     page: PageId,
@@ -28,6 +34,8 @@ interface NavigationContextType {
       category?: string;
       replace?: boolean;
       scrollTo?: string;
+      resetUserId?: number;
+      resetPasswordToken?: string;
     }
   ) => void;
   goBack: () => void;
@@ -82,6 +90,49 @@ function parseUrlToRoute(): NavigationState {
     return { page: 'contact', category: categoryParam };
   }
 
+  if (path === '/forgot-password') {
+    return { page: 'forgot-password', category: categoryParam };
+  }
+
+  if (path.startsWith('/reset-password')) {
+    // Route pattern: /reset-password/:userId/:resetPasswordToken
+    const rawPath = window.location.pathname;
+    const segments = rawPath.split('/').filter(Boolean);
+    let resetUserId: number | undefined;
+    let resetPasswordToken: string | undefined;
+
+    if (segments.length >= 3 && segments[0].toLowerCase() === 'reset-password') {
+      const parsedId = parseInt(segments[1], 10);
+      if (!isNaN(parsedId)) {
+        resetUserId = parsedId;
+      }
+      resetPasswordToken = decodeURIComponent(segments.slice(2).join('/'));
+    }
+
+    // Also support fallback query parameters: ?userId=123&token=abc
+    if (resetUserId === undefined) {
+      const qId = searchParams.get('userId') || searchParams.get('id');
+      if (qId) {
+        const parsed = parseInt(qId, 10);
+        if (!isNaN(parsed)) resetUserId = parsed;
+      }
+    }
+
+    if (!resetPasswordToken) {
+      resetPasswordToken =
+        searchParams.get('token') ||
+        searchParams.get('resetPasswordToken') ||
+        undefined;
+    }
+
+    return {
+      page: 'reset-password',
+      category: categoryParam,
+      resetUserId,
+      resetPasswordToken,
+    };
+  }
+
   // Default to Home
   return {
     page: 'home',
@@ -91,7 +142,13 @@ function parseUrlToRoute(): NavigationState {
 }
 
 // Helper to construct URL path from state
-function buildUrl(page: PageId, productId?: number, category?: string): string {
+function buildUrl(
+  page: PageId,
+  productId?: number,
+  category?: string,
+  resetUserId?: number,
+  resetPasswordToken?: string
+): string {
   let path = '/';
   if (page === 'home') path = '/';
   else if (page === 'product-details') path = `/product/${productId || 29}`;
@@ -101,6 +158,14 @@ function buildUrl(page: PageId, productId?: number, category?: string): string {
   else if (page === 'checkout') path = '/checkout';
   else if (page === 'about') path = '/about';
   else if (page === 'contact') path = '/contact';
+  else if (page === 'forgot-password') path = '/forgot-password';
+  else if (page === 'reset-password') {
+    if (resetUserId !== undefined && resetPasswordToken) {
+      path = `/reset-password/${resetUserId}/${encodeURIComponent(resetPasswordToken)}`;
+    } else {
+      path = '/reset-password';
+    }
+  }
 
   if (category && category !== 'ALL' && page === 'home') {
     path += `?category=${encodeURIComponent(category)}`;
@@ -114,6 +179,8 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [activePage, setActivePage] = useState<PageId>(initialRoute.page);
   const [selectedProductId, setSelectedProductId] = useState<number>(initialRoute.productId || 29);
   const [activeCategory, setActiveCategoryState] = useState<string>(initialRoute.category || 'ALL');
+  const [resetUserId, setResetUserId] = useState<number | undefined>(initialRoute.resetUserId);
+  const [resetPasswordToken, setResetPasswordToken] = useState<string | undefined>(initialRoute.resetPasswordToken);
 
   // Handle native browser Back and Forward buttons via popstate
   useEffect(() => {
@@ -123,11 +190,15 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setActivePage(state.page);
         if (state.productId) setSelectedProductId(state.productId);
         if (state.category) setActiveCategoryState(state.category);
+        setResetUserId(state.resetUserId);
+        setResetPasswordToken(state.resetPasswordToken);
       } else {
         const parsed = parseUrlToRoute();
         setActivePage(parsed.page);
         if (parsed.productId) setSelectedProductId(parsed.productId);
         if (parsed.category) setActiveCategoryState(parsed.category);
+        setResetUserId(parsed.resetUserId);
+        setResetPasswordToken(parsed.resetPasswordToken);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -135,12 +206,20 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     window.addEventListener('popstate', handlePopState);
 
     // Ensure the initial history entry has state attached
-    const currentUrl = buildUrl(initialRoute.page, initialRoute.productId, initialRoute.category);
+    const currentUrl = buildUrl(
+      initialRoute.page,
+      initialRoute.productId,
+      initialRoute.category,
+      initialRoute.resetUserId,
+      initialRoute.resetPasswordToken
+    );
     window.history.replaceState(
       {
         page: initialRoute.page,
         productId: initialRoute.productId,
         category: initialRoute.category,
+        resetUserId: initialRoute.resetUserId,
+        resetPasswordToken: initialRoute.resetPasswordToken,
       },
       '',
       currentUrl
@@ -176,10 +255,24 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         category?: string;
         replace?: boolean;
         scrollTo?: string;
+        resetUserId?: number;
+        resetPasswordToken?: string;
       }
     ) => {
       const targetProdId = options?.productId !== undefined ? options.productId : selectedProductId;
       const targetCat = options?.category !== undefined ? options.category : activeCategory;
+      const targetUserId =
+        options?.resetUserId !== undefined
+          ? options.resetUserId
+          : page === 'reset-password'
+          ? resetUserId
+          : undefined;
+      const targetToken =
+        options?.resetPasswordToken !== undefined
+          ? options.resetPasswordToken
+          : page === 'reset-password'
+          ? resetPasswordToken
+          : undefined;
 
       setActivePage(page);
       if (options?.productId !== undefined) {
@@ -188,12 +281,16 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (options?.category !== undefined) {
         setActiveCategoryState(options.category);
       }
+      setResetUserId(targetUserId);
+      setResetPasswordToken(targetToken);
 
-      const url = buildUrl(page, targetProdId, targetCat);
+      const url = buildUrl(page, targetProdId, targetCat, targetUserId, targetToken);
       const stateObj: NavigationState = {
         page,
         productId: targetProdId,
         category: targetCat,
+        resetUserId: targetUserId,
+        resetPasswordToken: targetToken,
       };
 
       if (options?.replace) {
@@ -208,7 +305,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
-    [selectedProductId, activeCategory, scrollToSection]
+    [selectedProductId, activeCategory, resetUserId, resetPasswordToken, scrollToSection]
   );
 
   const goBack = useCallback(() => {
@@ -240,6 +337,8 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         activePage,
         selectedProductId,
         activeCategory,
+        resetUserId,
+        resetPasswordToken,
         setActiveCategory,
         navigate,
         goBack,
@@ -258,3 +357,65 @@ export const useNavigation = () => {
   }
   return context;
 };
+
+/**
+ * Route parameter hook to automatically extract parameters such as :userId and :resetToken
+ */
+export function useParams<T extends Record<string, string | undefined>>(): T {
+  const context = useContext(NavigationContext);
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const segments = path.split('/').filter(Boolean);
+
+  const params: Record<string, string | undefined> = {};
+
+  if (segments[0]?.toLowerCase() === 'reset-password') {
+    if (segments[1]) {
+      params.userId = segments[1];
+      params.id = segments[1];
+    }
+    if (segments[2]) {
+      const tok = decodeURIComponent(segments.slice(2).join('/'));
+      params.resetToken = tok;
+      params.resetPasswordToken = tok;
+      params.token = tok;
+    }
+  } else if (segments[0]?.toLowerCase() === 'product' && segments[1]) {
+    params.id = segments[1];
+    params.productId = segments[1];
+  }
+
+  // Fallback to query params
+  if (!params.userId) {
+    const qUserId = searchParams.get('userId') || searchParams.get('id');
+    if (qUserId) {
+      params.userId = qUserId;
+      params.id = qUserId;
+    }
+  }
+  if (!params.resetToken) {
+    const qToken =
+      searchParams.get('token') ||
+      searchParams.get('resetPasswordToken') ||
+      searchParams.get('resetToken');
+    if (qToken) {
+      params.resetToken = qToken;
+      params.resetPasswordToken = qToken;
+      params.token = qToken;
+    }
+  }
+
+  // Fallback to context
+  if (context?.resetUserId !== undefined && !params.userId) {
+    params.userId = String(context.resetUserId);
+    params.id = String(context.resetUserId);
+  }
+  if (context?.resetPasswordToken && !params.resetToken) {
+    params.resetToken = context.resetPasswordToken;
+    params.resetPasswordToken = context.resetPasswordToken;
+    params.token = context.resetPasswordToken;
+  }
+
+  return params as T;
+}
+

@@ -24,6 +24,8 @@ export const ReferenceCompareModal: FC<ReferenceCompareModalProps> = ({
     'review': '/references/write-review.jpg',
     'about': '/references/product-details.jpg',
     'contact': '/references/product-details.jpg',
+    'forgot-password': '/references/sign-in.jpg',
+    'reset-password': '/references/sign-in.jpg',
   };
 
   const refTitleMap: Record<PageId, string> = {
@@ -35,6 +37,8 @@ export const ReferenceCompareModal: FC<ReferenceCompareModalProps> = ({
     'review': 'Approved Reference: Write a Review (Share your experience)',
     'about': 'About Us Design System',
     'contact': 'Contact Us Design System',
+    'forgot-password': 'Forgot Password Page',
+    'reset-password': 'Reset Password Page',
   };
 
   return (

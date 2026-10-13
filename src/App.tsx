@@ -9,6 +9,8 @@ import { CheckoutView } from './components/pages/CheckoutView';
 import { WriteReviewView } from './components/pages/WriteReviewView';
 import { AboutView } from './components/pages/AboutView';
 import { ContactView } from './components/pages/ContactView';
+import { ForgotPasswordView } from './components/pages/ForgotPasswordView';
+import { ResetPasswordView } from './components/pages/ResetPasswordView';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { NavigationProvider, useNavigation, type PageId } from './context/NavigationContext';
@@ -73,7 +75,7 @@ function AppContent() {
         )}
 
         {activePage === 'signin' && (
-          <SignInView onNavigate={handleNavigate} />
+          <SignInView initialMode="signin" onNavigate={handleNavigate} />
         )}
 
         {activePage === 'checkout' && (
@@ -96,6 +98,14 @@ function AppContent() {
 
         {activePage === 'contact' && (
           <ContactView />
+        )}
+
+        {activePage === 'forgot-password' && (
+          <ForgotPasswordView onNavigate={handleNavigate} />
+        )}
+
+        {activePage === 'reset-password' && (
+          <ResetPasswordView onNavigate={handleNavigate} />
         )}
       </main>
 
