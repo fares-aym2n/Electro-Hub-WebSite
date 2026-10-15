@@ -2,10 +2,12 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 export type PageId =
   | 'home'
+  | 'products'
   | 'product-details'
   | 'signup'
   | 'signin'
   | 'checkout'
+  | 'wishlist'
   | 'review'
   | 'about'
   | 'contact'
@@ -16,6 +18,7 @@ export interface NavigationState {
   page: PageId;
   productId?: number;
   category?: string;
+  discount?: boolean;
   resetUserId?: number;
   resetPasswordToken?: string;
 }
@@ -24,14 +27,17 @@ export interface NavigationContextType {
   activePage: PageId;
   selectedProductId: number;
   activeCategory: string;
+  discountFilter: boolean;
   resetUserId?: number;
   resetPasswordToken?: string;
   setActiveCategory: (cat: string) => void;
+  setDiscountFilter: (val: boolean) => void;
   navigate: (
     page: PageId,
     options?: {
       productId?: number;
       category?: string;
+      discount?: boolean;
       replace?: boolean;
       scrollTo?: string;
       resetUserId?: number;
@@ -49,6 +55,15 @@ function parseUrlToRoute(): NavigationState {
   const path = window.location.pathname.toLowerCase();
   const searchParams = new URLSearchParams(window.location.search);
   const categoryParam = searchParams.get('category') || undefined;
+  const discountParam = searchParams.get('discount') === 'true' || path === '/offers';
+
+  if (path === '/products' || path === '/catalog' || path === '/inventory' || path === '/offers') {
+    return {
+      page: 'products',
+      category: categoryParam || 'ALL',
+      discount: discountParam,
+    };
+  }
 
   if (path.startsWith('/product/')) {
     const parts = path.split('/');
@@ -80,6 +95,10 @@ function parseUrlToRoute(): NavigationState {
 
   if (path === '/checkout') {
     return { page: 'checkout', category: categoryParam };
+  }
+
+  if (path === '/wishlist' || path === '/favorites') {
+    return { page: 'wishlist', category: categoryParam };
   }
 
   if (path === '/about' || path === '/about-us') {
@@ -147,19 +166,33 @@ function buildUrl(
   productId?: number,
   category?: string,
   resetUserId?: number,
-  resetPasswordToken?: string
+  resetPasswordToken?: string,
+  discount?: boolean
 ): string {
   let path = '/';
-  if (page === 'home') path = '/';
-  else if (page === 'product-details') path = `/product/${productId || 29}`;
-  else if (page === 'review') path = `/review/${productId || 29}`;
-  else if (page === 'signin') path = '/signin';
-  else if (page === 'signup') path = '/signup';
-  else if (page === 'checkout') path = '/checkout';
-  else if (page === 'about') path = '/about';
-  else if (page === 'contact') path = '/contact';
-  else if (page === 'forgot-password') path = '/forgot-password';
-  else if (page === 'reset-password') {
+  if (page === 'home') {
+    path = '/';
+  } else if (page === 'products') {
+    path = '/products';
+  } else if (page === 'product-details') {
+    path = `/product/${productId || 29}`;
+  } else if (page === 'review') {
+    path = `/review/${productId || 29}`;
+  } else if (page === 'signin') {
+    path = '/signin';
+  } else if (page === 'signup') {
+    path = '/signup';
+  } else if (page === 'checkout') {
+    path = '/checkout';
+  } else if (page === 'wishlist') {
+    path = '/wishlist';
+  } else if (page === 'about') {
+    path = '/about';
+  } else if (page === 'contact') {
+    path = '/contact';
+  } else if (page === 'forgot-password') {
+    path = '/forgot-password';
+  } else if (page === 'reset-password') {
     if (resetUserId !== undefined && resetPasswordToken) {
       path = `/reset-password/${resetUserId}/${encodeURIComponent(resetPasswordToken)}`;
     } else {
@@ -167,8 +200,16 @@ function buildUrl(
     }
   }
 
-  if (category && category !== 'ALL' && page === 'home') {
-    path += `?category=${encodeURIComponent(category)}`;
+  const queryParts: string[] = [];
+  if (category && category !== 'ALL' && (page === 'home' || page === 'products')) {
+    queryParts.push(`category=${encodeURIComponent(category)}`);
+  }
+  if (discount && page === 'products') {
+    queryParts.push('discount=true');
+  }
+
+  if (queryParts.length > 0) {
+    path += `?${queryParts.join('&')}`;
   }
 
   return path;
@@ -179,6 +220,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [activePage, setActivePage] = useState<PageId>(initialRoute.page);
   const [selectedProductId, setSelectedProductId] = useState<number>(initialRoute.productId || 29);
   const [activeCategory, setActiveCategoryState] = useState<string>(initialRoute.category || 'ALL');
+  const [discountFilter, setDiscountFilter] = useState<boolean>(initialRoute.discount || false);
   const [resetUserId, setResetUserId] = useState<number | undefined>(initialRoute.resetUserId);
   const [resetPasswordToken, setResetPasswordToken] = useState<string | undefined>(initialRoute.resetPasswordToken);
 
@@ -190,6 +232,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setActivePage(state.page);
         if (state.productId) setSelectedProductId(state.productId);
         if (state.category) setActiveCategoryState(state.category);
+        setDiscountFilter(state.discount || false);
         setResetUserId(state.resetUserId);
         setResetPasswordToken(state.resetPasswordToken);
       } else {
@@ -197,6 +240,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setActivePage(parsed.page);
         if (parsed.productId) setSelectedProductId(parsed.productId);
         if (parsed.category) setActiveCategoryState(parsed.category);
+        setDiscountFilter(parsed.discount || false);
         setResetUserId(parsed.resetUserId);
         setResetPasswordToken(parsed.resetPasswordToken);
       }
@@ -211,13 +255,15 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       initialRoute.productId,
       initialRoute.category,
       initialRoute.resetUserId,
-      initialRoute.resetPasswordToken
+      initialRoute.resetPasswordToken,
+      initialRoute.discount
     );
     window.history.replaceState(
       {
         page: initialRoute.page,
         productId: initialRoute.productId,
         category: initialRoute.category,
+        discount: initialRoute.discount,
         resetUserId: initialRoute.resetUserId,
         resetPasswordToken: initialRoute.resetPasswordToken,
       },
@@ -253,6 +299,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       options?: {
         productId?: number;
         category?: string;
+        discount?: boolean;
         replace?: boolean;
         scrollTo?: string;
         resetUserId?: number;
@@ -261,6 +308,12 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     ) => {
       const targetProdId = options?.productId !== undefined ? options.productId : selectedProductId;
       const targetCat = options?.category !== undefined ? options.category : activeCategory;
+      const targetDiscount =
+        options?.discount !== undefined
+          ? options.discount
+          : page === 'products'
+          ? discountFilter
+          : false;
       const targetUserId =
         options?.resetUserId !== undefined
           ? options.resetUserId
@@ -281,14 +334,16 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (options?.category !== undefined) {
         setActiveCategoryState(options.category);
       }
+      setDiscountFilter(targetDiscount);
       setResetUserId(targetUserId);
       setResetPasswordToken(targetToken);
 
-      const url = buildUrl(page, targetProdId, targetCat, targetUserId, targetToken);
+      const url = buildUrl(page, targetProdId, targetCat, targetUserId, targetToken, targetDiscount);
       const stateObj: NavigationState = {
         page,
         productId: targetProdId,
         category: targetCat,
+        discount: targetDiscount,
         resetUserId: targetUserId,
         resetPasswordToken: targetToken,
       };
@@ -305,7 +360,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
-    [selectedProductId, activeCategory, resetUserId, resetPasswordToken, scrollToSection]
+    [selectedProductId, activeCategory, discountFilter, resetUserId, resetPasswordToken, scrollToSection]
   );
 
   const goBack = useCallback(() => {
@@ -319,16 +374,16 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const setActiveCategory = useCallback(
     (cat: string) => {
       setActiveCategoryState(cat);
-      if (activePage === 'home') {
-        const url = buildUrl('home', selectedProductId, cat);
+      if (activePage === 'home' || activePage === 'products') {
+        const url = buildUrl(activePage, selectedProductId, cat, undefined, undefined, discountFilter);
         window.history.replaceState(
-          { page: 'home', productId: selectedProductId, category: cat },
+          { page: activePage, productId: selectedProductId, category: cat, discount: discountFilter },
           '',
           url
         );
       }
     },
-    [activePage, selectedProductId]
+    [activePage, selectedProductId, discountFilter]
   );
 
   return (
@@ -337,9 +392,11 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         activePage,
         selectedProductId,
         activeCategory,
+        discountFilter,
         resetUserId,
         resetPasswordToken,
         setActiveCategory,
+        setDiscountFilter,
         navigate,
         goBack,
         scrollToSection,

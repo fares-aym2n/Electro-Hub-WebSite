@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { ElectroHeader } from './components/electro/ElectroHeader';
 import { ElectroFooter } from './components/electro/ElectroFooter';
 import { HomeView } from './components/pages/HomeView';
+import { ProductListingView } from './components/pages/ProductListingView';
 import { ProductDetailsView } from './components/pages/ProductDetailsView';
 import { SignUpView } from './components/pages/SignUpView';
 import { SignInView } from './components/pages/SignInView';
 import { CheckoutView } from './components/pages/CheckoutView';
+import { WishlistView } from './components/pages/WishlistView';
 import { WriteReviewView } from './components/pages/WriteReviewView';
 import { AboutView } from './components/pages/AboutView';
 import { ContactView } from './components/pages/ContactView';
@@ -13,6 +15,7 @@ import { ForgotPasswordView } from './components/pages/ForgotPasswordView';
 import { ResetPasswordView } from './components/pages/ResetPasswordView';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
+import { FavoritesProvider } from './context/FavoritesContext';
 import { NavigationProvider, useNavigation, type PageId } from './context/NavigationContext';
 import { productService } from './services/productService';
 import type { ApiProduct } from './types/api';
@@ -62,6 +65,14 @@ function AppContent() {
           />
         )}
 
+        {activePage === 'products' && (
+          <ProductListingView
+            onNavigate={handleNavigate}
+            onSelectProduct={handleSelectProduct}
+            onAddToCart={(prod) => handleAddToCart(prod, 1)}
+          />
+        )}
+
         {activePage === 'product-details' && (
           <ProductDetailsView
             productId={selectedProductId}
@@ -82,6 +93,14 @@ function AppContent() {
           <CheckoutView
             onNavigate={handleNavigate}
             onClearCart={clearCart}
+          />
+        )}
+
+        {activePage === 'wishlist' && (
+          <WishlistView
+            onNavigate={handleNavigate}
+            onSelectProduct={handleSelectProduct}
+            onAddToCart={(prod) => handleAddToCart(prod, 1)}
           />
         )}
 
@@ -119,9 +138,11 @@ export default function App() {
   return (
     <NavigationProvider>
       <AuthProvider>
-        <CartProvider>
-          <AppContent />
-        </CartProvider>
+        <FavoritesProvider>
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
+        </FavoritesProvider>
       </AuthProvider>
     </NavigationProvider>
   );

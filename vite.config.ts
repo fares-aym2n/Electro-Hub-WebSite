@@ -12,6 +12,12 @@ export default defineConfig({
     port: 3001,
     host: true,
     proxy: {
+      '/api/wishlist': {
+        target: 'https://electro-hub-1.vercel.app',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/wishlist/, '/api/whitelist'),
+      },
       '/api': {
         target: 'https://electro-hub-1.vercel.app',
         changeOrigin: true,

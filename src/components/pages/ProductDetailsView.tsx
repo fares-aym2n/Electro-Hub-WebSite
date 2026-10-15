@@ -1,11 +1,27 @@
 import type { FC } from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import { Star, Minus, Plus, AlertCircle, RefreshCw, CheckCircle2, MessageSquarePlus } from 'lucide-react';
+import {
+  Star,
+  Minus,
+  Plus,
+  AlertCircle,
+  RefreshCw,
+  CheckCircle2,
+  MessageSquarePlus,
+  Heart,
+  Edit3,
+  Trash2,
+} from 'lucide-react';
 import type { PageId } from '../electro/ElectroHeader';
-import type { ApiProduct } from '../../types/api';
+import type { ApiProduct, ApiReview } from '../../types/api';
 import { productService } from '../../services/productService';
+import { reviewService } from '../../services/reviewService';
+import { useFavorites } from '../../context/FavoritesContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatPrice, formatRating, formatDate } from '../../utils/formatters';
 import { BackButton } from '../common/BackButton';
+import { EditReviewModal } from '../reviews/EditReviewModal';
+import { DeleteReviewModal } from '../reviews/DeleteReviewModal';
 
 interface ProductDetailsViewProps {
   productId?: number;
@@ -18,24 +34,55 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
   onNavigate,
   onAddToCart,
 }) => {
+  const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [product, setProduct] = useState<ApiProduct | null>(null);
+  const [reviews, setReviews] = useState<ApiReview[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedThumb, setSelectedThumb] = useState(0);
   const [addedNotice, setAddedNotice] = useState(false);
 
-  // Fetch real product by ID
+  // Review management states
+  const [editingReview, setEditingReview] = useState<ApiReview | null>(null);
+  const [deletingReview, setDeletingReview] = useState<ApiReview | null>(null);
+  const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Fetch real product by ID and enrich reviews with author info
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
     setError(null);
 
-    productService.getProductById(productId)
-      .then((data) => {
-        if (isMounted) {
-          setProduct(data);
-          setSelectedThumb(0);
+    productService
+      .getProductById(productId)
+      .then(async (data) => {
+        if (!isMounted) return;
+        setProduct(data);
+        const rawReviews = data.reviews || [];
+        setReviews(rawReviews);
+        setSelectedThumb(0);
+
+        // If backend product reviews lack user relation, fetch individual review details in parallel
+        if (rawReviews.some((r) => !r.user || !r.user.id)) {
+          try {
+            const enriched = await Promise.all(
+              rawReviews.map(async (r) => {
+                if (r.user && r.user.id) return r;
+                try {
+                  return await reviewService.getReviewById(r.id);
+                } catch {
+                  return r;
+                }
+              })
+            );
+            if (isMounted) {
+              setReviews(enriched);
+            }
+          } catch {
+            // Keep rawReviews if individual fetches fail
+          }
         }
       })
       .catch((err: any) => {
@@ -70,9 +117,8 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
     return [baseImg];
   }, [product]);
 
-  // Calculate real rating distribution breakdown from product reviews
+  // Calculate real rating distribution breakdown from reviews
   const ratingsBreakdown = useMemo(() => {
-    const reviews = product?.reviews || [];
     const total = reviews.length;
 
     const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -86,7 +132,64 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
       const pct = total > 0 ? Math.round((count / total) * 100) : 0;
       return { star: `${star} STAR`, pct, count };
     });
-  }, [product]);
+  }, [reviews]);
+
+  // Dynamic live average rating from active reviews, synchronized with product aggregate
+  const currentAverageRating = useMemo(() => {
+    if (reviews.length === 0) return product?.averageRating || '0.0';
+    const sum = reviews.reduce((acc, r) => acc + Number(r.rating || 0), 0);
+    return (sum / reviews.length).toFixed(1);
+  }, [reviews, product?.averageRating]);
+
+  const handleSaveReviewSuccess = (updatedReview: ApiReview) => {
+    // 1. Update review in local state immediately
+    setReviews((prev) =>
+      prev.map((r) => (r.id === updatedReview.id ? updatedReview : r))
+    );
+
+    // 2. Refetch product details so backend recalculation of averageRating & ratingsCount is synchronized
+    productService
+      .getProductById(productId)
+      .then((data) => {
+        setProduct(data);
+      })
+      .catch((err) => {
+        console.warn('Failed to refresh product aggregates:', err);
+      });
+
+    // 3. Display success toast notification
+    setFeedbackToast({
+      message: 'Your review was updated successfully!',
+      type: 'success',
+    });
+    setTimeout(() => {
+      setFeedbackToast((cur) => (cur?.message.includes('updated') ? null : cur));
+    }, 4000);
+  };
+
+  const handleDeleteReviewSuccess = (deletedReviewId: number) => {
+    // 1. Remove review from local state immediately
+    setReviews((prev) => prev.filter((r) => r.id !== deletedReviewId));
+
+    // 2. Refetch product details so backend recalculation of averageRating & ratingsCount is synchronized
+    productService
+      .getProductById(productId)
+      .then((data) => {
+        setProduct(data);
+      })
+      .catch((err) => {
+        console.warn('Failed to refresh product aggregates:', err);
+      });
+
+    // 3. Display success toast notification
+    setFeedbackToast({
+      message: 'Your review was deleted successfully.',
+      type: 'success',
+    });
+    setTimeout(() => {
+      setFeedbackToast((cur) => (cur?.message.includes('deleted') ? null : cur));
+    }, 4000);
+  };
 
   const handleAdd = () => {
     if (!product) return;
@@ -192,7 +295,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
             )}
 
             {/* Main Image Showcase Card */}
-            <div className="flex-1 bg-[#EEE9E5] rounded-3xl p-6 sm:p-8 flex items-center justify-center min-h-[380px] sm:min-h-[440px]">
+            <div className="flex-1 bg-[#EEE9E5] rounded-3xl p-6 sm:p-8 flex items-center justify-center min-h-[380px] sm:min-h-[440px] relative">
               <img
                 src={currentDisplayImage}
                 alt={product.name}
@@ -201,6 +304,23 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 }}
                 className="w-full h-auto max-h-[380px] object-contain drop-shadow-md"
               />
+
+              {/* Wishlist Heart Button */}
+              <button
+                type="button"
+                onClick={() => toggleFavorite(product)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FAF6F2]/90 hover:bg-[#FAF6F2] border border-[#DFD4C8] hover:border-[#C49B82] flex items-center justify-center text-[#111111] transition-all duration-200 active:scale-90 shadow-2xs z-10"
+                aria-label={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
+                title={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart
+                  className={`w-5 h-5 transition-colors ${
+                    isFavorite(product.id)
+                      ? 'fill-[#C49B82] text-[#C49B82]'
+                      : 'text-[#555555] hover:text-[#C49B82]'
+                  }`}
+                />
+              </button>
             </div>
           </div>
 
@@ -224,7 +344,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                   <Star
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.round(Number(product.averageRating) || 0)
+                      i < Math.round(Number(currentAverageRating) || 0)
                         ? 'fill-[#C49B82] text-[#C49B82]'
                         : 'text-[#DFD4C8]'
                     }`}
@@ -232,7 +352,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 ))}
               </div>
               <span className="text-[14px] text-[#111111] font-medium">
-                {formatRating(product.averageRating)} ({product.ratingsCount} reviews)
+                {formatRating(currentAverageRating)} ({reviews.length} reviews)
               </span>
             </div>
 
@@ -291,6 +411,25 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 >
                   ADD TO CART
                 </button>
+
+                {/* Wishlist Heart Button */}
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(product)}
+                  className={`h-11 w-11 rounded-lg border border-[#DFD4C8] hover:border-[#C49B82] flex items-center justify-center transition active:scale-95 shadow-xs ${
+                    isFavorite(product.id)
+                      ? 'bg-[#E5D7CA] text-[#C49B82]'
+                      : 'bg-[#EDE8E4] text-[#555555] hover:text-[#C49B82]'
+                  }`}
+                  aria-label={isFavorite(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                  title={isFavorite(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart
+                    className={`w-5 h-5 ${
+                      isFavorite(product.id) ? 'fill-[#C49B82] text-[#C49B82]' : ''
+                    }`}
+                  />
+                </button>
               </div>
 
               {addedNotice && (
@@ -336,7 +475,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
             {/* Big Score */}
             <div className="pt-2">
               <div className="text-[52px] font-bold text-[#C49B82] leading-none tracking-tight">
-                {formatRating(product.averageRating)}
+                {formatRating(currentAverageRating)}
               </div>
 
               {/* 5 Stars */}
@@ -345,7 +484,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                   <Star
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.round(Number(product.averageRating) || 0)
+                      i < Math.round(Number(currentAverageRating) || 0)
                         ? 'fill-[#C49B82] text-[#C49B82]'
                         : 'text-[#DFD4C8]'
                     }`}
@@ -354,7 +493,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
               </div>
 
               <div className="text-[14px] text-[#111111] font-medium mt-2">
-                {product.ratingsCount} reviews
+                {reviews.length} reviews
               </div>
             </div>
 
@@ -391,7 +530,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 }}
                 className="block text-[13px] font-bold text-[#C49B82] tracking-[0.08em] uppercase hover:underline transition"
               >
-                VIEW ALL ({product.reviews?.length || 0}) REVIEWS ↓
+                VIEW ALL ({reviews.length}) REVIEWS ↓
               </button>
             </div>
           </div>
@@ -418,7 +557,30 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
             </button>
           </div>
 
-          {(!product.reviews || product.reviews.length === 0) ? (
+          {/* Feedback Toast Notification */}
+          {feedbackToast && (
+            <div
+              className={`p-4 rounded-2xl flex items-center justify-between gap-3 text-sm transition animate-in fade-in duration-200 ${
+                feedbackToast.type === 'success'
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span className="font-medium">{feedbackToast.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFeedbackToast(null)}
+                className="text-xs font-bold uppercase tracking-wider hover:underline opacity-70 hover:opacity-100"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {reviews.length === 0 ? (
             <div className="p-8 rounded-2xl bg-[#EEE9E5] text-center space-y-2">
               <p className="text-sm text-[#555555]">No customer reviews submitted for this product yet.</p>
               <button
@@ -430,35 +592,144 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {product.reviews.map((rev) => (
-                <div key={rev.id} className="p-5 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex text-[#C49B82]">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3.5 h-3.5 ${
-                            i < Math.round(rev.rating)
-                              ? 'fill-[#C49B82] text-[#C49B82]'
-                              : 'text-[#DFD4C8]'
-                          }`}
-                        />
-                      ))}
+              {reviews.map((rev) => {
+                const isOwner = Boolean(user && rev.user && rev.user.id === user.id);
+                const canDelete = Boolean(isOwner || (user && user.role === 'admin'));
+                const authorName = rev.user?.username || 'Verified Buyer';
+                const avatarInitial = (authorName.charAt(0) || 'U').toUpperCase();
+                const isEdited = Boolean(
+                  rev.updatedAt &&
+                  rev.createdAt &&
+                  new Date(rev.updatedAt).getTime() - new Date(rev.createdAt).getTime() > 2000
+                );
+
+                return (
+                  <div
+                    key={rev.id}
+                    className={`p-5 sm:p-6 rounded-2xl bg-[#EEE9E5] border transition space-y-3.5 relative ${
+                      isOwner
+                        ? 'border-[#C49B82] shadow-xs'
+                        : 'border-[#E5D7CA]'
+                    }`}
+                  >
+                    {/* Header: Author Info + Date + Action Buttons */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        {/* Avatar */}
+                        <div className="w-9 h-9 rounded-full bg-[#DFD4C8] border border-[#C49B82]/30 flex items-center justify-center text-[#111111] font-bold text-xs shrink-0 uppercase overflow-hidden">
+                          {rev.user?.profile_image ? (
+                            <img
+                              src={rev.user.profile_image}
+                              alt={authorName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            avatarInitial
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-bold text-[#111111]">
+                              {authorName}
+                            </span>
+                            {isOwner && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#C49B82] text-[#FAF6F2]">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#777777] font-medium">
+                            <span>{formatDate(rev.createdAt)}</span>
+                            {isEdited && (
+                              <>
+                                <span>•</span>
+                                <span className="italic text-[#888888]">(edited)</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons: Render ONLY if current user is owner (or admin for delete) */}
+                      {(isOwner || canDelete) && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isOwner && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingReview(rev)}
+                              className="px-2.5 py-1 rounded-lg border border-[#DFD4C8] bg-[#FAF6F2] hover:bg-[#FAF6F2] hover:border-[#C49B82] text-[#333333] hover:text-[#111111] text-xs font-semibold flex items-center gap-1 transition shadow-2xs cursor-pointer"
+                              title="Edit this review"
+                              aria-label="Edit review"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-[#C49B82]" />
+                              <span className="hidden sm:inline">Edit</span>
+                            </button>
+                          )}
+
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => setDeletingReview(rev)}
+                              className="px-2.5 py-1 rounded-lg border border-[#DFD4C8] bg-[#FAF6F2] hover:border-red-300 hover:bg-red-50 text-[#555555] hover:text-red-700 text-xs font-semibold flex items-center gap-1 transition shadow-2xs cursor-pointer"
+                              title="Delete this review"
+                              aria-label="Delete review"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                              <span className="hidden sm:inline">Delete</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-[11px] text-[#777777] font-medium">
-                      {formatDate(rev.createdAt)}
-                    </span>
+
+                    {/* Star Rating */}
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex text-[#C49B82]">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3.5 h-3.5 ${
+                              i < Math.round(rev.rating)
+                                ? 'fill-[#C49B82] text-[#C49B82]'
+                                : 'text-[#DFD4C8]'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[12px] font-semibold text-[#111111]">
+                        {rev.rating}.0
+                      </span>
+                    </div>
+
+                    {/* Review Content */}
+                    <p className="text-sm text-[#222222] leading-relaxed italic">
+                      "{rev.review}"
+                    </p>
                   </div>
-                  <p className="text-sm text-[#111111] leading-relaxed italic">
-                    "{rev.review}"
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
       </div>
+
+      {/* Edit Review Modal */}
+      <EditReviewModal
+        isOpen={Boolean(editingReview)}
+        review={editingReview}
+        onClose={() => setEditingReview(null)}
+        onSaveSuccess={handleSaveReviewSuccess}
+      />
+
+      {/* Delete Review Modal */}
+      <DeleteReviewModal
+        isOpen={Boolean(deletingReview)}
+        review={deletingReview}
+        onClose={() => setDeletingReview(null)}
+        onDeleteSuccess={handleDeleteReviewSuccess}
+      />
     </div>
   );
 };

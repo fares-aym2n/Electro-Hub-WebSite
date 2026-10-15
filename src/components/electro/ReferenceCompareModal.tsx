@@ -17,10 +17,12 @@ export const ReferenceCompareModal: FC<ReferenceCompareModalProps> = ({
 
   const refImageMap: Record<PageId, string> = {
     'home': '/references/product-details.jpg',
+    'products': '/references/product-details.jpg',
     'product-details': '/references/product-details.jpg',
     'signup': '/references/sign-up.jpg',
     'signin': '/references/sign-in.jpg',
     'checkout': '/references/checkout.jpg',
+    'wishlist': '/references/product-details.jpg',
     'review': '/references/write-review.jpg',
     'about': '/references/product-details.jpg',
     'contact': '/references/product-details.jpg',
@@ -30,10 +32,12 @@ export const ReferenceCompareModal: FC<ReferenceCompareModalProps> = ({
 
   const refTitleMap: Record<PageId, string> = {
     'home': 'Home Page Design System (Shared reference: Product Details)',
+    'products': 'Product Listing & Catalog Design System',
     'product-details': 'Approved Reference: Product Details (Sony WH-1000XM4)',
     'signup': 'Approved Reference: Sign Up (create your account)',
     'signin': 'Approved Reference: Sign In (Welcome back)',
     'checkout': 'Approved Reference: Checkout (Shipping, Pedestal, Order Summary)',
+    'wishlist': 'Favorites & Wishlist Design System',
     'review': 'Approved Reference: Write a Review (Share your experience)',
     'about': 'About Us Design System',
     'contact': 'Contact Us Design System',

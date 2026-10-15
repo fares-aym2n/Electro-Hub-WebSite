@@ -1,8 +1,21 @@
 import { apiClient } from './apiClient';
 import type { ApiCategory, CategoriesResponse, ProductsResponse } from '../types/api';
 
-// Memory cache for category image associations to avoid repeated network requests
-let categoryImagesCache: Record<number, string> | null = null;
+// Pre-seeded memory cache for category image associations to avoid repeated network requests
+const INITIAL_CATEGORY_IMAGES: Record<number, string> = {
+  1: 'https://media.flixcar.com/webp/synd-asset/Samsung-143118383-au-galaxy-s24-s928-sm-s928bzkfats-539291896--Download-Source--zoom.png',
+  2: 'https://dlcdnwebimgs.asus.com/gain/4E56238F-FDD4-4E6A-B8F2-653B104E8A32/w717/h525',
+  3: 'https://p4-ofp.static.pub/fes/cms/2023/03/28/7dch8vg9lz0tzeg74u3x9paoln4o8z319478.png',
+  4: 'https://assets.nvidia.partners/images/png/n82e16824026351.png',
+  5: 'https://resource.logitechg.com/c_fill,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/pro-x-2-lightspeed/gallery/gallery-1-pro-x-2-lightspeed-gaming-headset-black.png',
+  6: 'https://eshop.vodafone.com.eg/ecommerce/api/asset/content/9559942636.png?contextRequest=%7B%22forceCatalogForFetch%22:false,%22forceFilterByCatalogIncludeInheritance%22:false,%22forceFilterByCatalogExcludeInheritance%22:false,%22applicationId%22:%2201H5FECVAV4YWT0NGQKXEN1T51%22,%22tenantId%22:%225DF1363059675161A85F576D%22%7D',
+  7: 'https://api.delta-computer.net/storage/products/$2y$12$qW8JcwUO.XnvUBvwxEo7uwRcxDxpUXaKZluP.z5kjaqu9GKNjm2.webp',
+  8: 'https://dlcdnwebimgs.asus.com/gain/E70351F2-3579-45FB-95AC-4D41DA42EF2C',
+  9: 'https://egyptlaptop.com/images/detailed/54/Apple_Watch_Series_9_Midnight_q0nz-pi.webp',
+  10: 'https://www.ugreen.com/cdn/shop/files/817dc5065eecb8588c253fa074e08184.webp?v=1766052131',
+};
+
+let categoryImagesCache: Record<number, string> = { ...INITIAL_CATEGORY_IMAGES };
 
 // Category matching keywords for catalog classification
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
@@ -51,32 +64,22 @@ export const categoryService = {
     }
 
     try {
-      // Fetch up to 7 pages from the API to find the first matching product for each category
-      for (let page = 1; page <= 7; page++) {
-        if (categories.every((c) => imageMap[c.id])) break;
+      await Promise.all(
+        missingCats.map(async (cat) => {
+          try {
+            const slug = (cat.slug || cat.name).toLowerCase();
+            const pData = await apiClient.get<ProductsResponse>('/api/products', {
+              params: { page: 1, category: slug },
+            });
 
-        const pData = await apiClient.get<ProductsResponse>('/api/products', {
-          params: { page },
-        });
-
-        if (!pData.products || pData.products.length === 0) break;
-
-        for (const cat of categories) {
-          if (imageMap[cat.id]) continue;
-
-          const slug = (cat.slug || cat.name).toLowerCase();
-          const keywords = CATEGORY_KEYWORDS[slug] || [slug];
-
-          const foundProd = pData.products.find((p) => {
-            const text = `${p.name} ${p.description}`.toLowerCase();
-            return keywords.some((k) => text.includes(k));
-          });
-
-          if (foundProd?.image) {
-            imageMap[cat.id] = foundProd.image;
+            if (pData.products && pData.products.length > 0 && pData.products[0].image) {
+              imageMap[cat.id] = pData.products[0].image;
+            }
+          } catch (catErr) {
+            console.warn(`Could not load preview image for category ${cat.name}:`, catErr);
           }
-        }
-      }
+        })
+      );
     } catch (err) {
       console.warn('Could not populate category images dynamically from API:', err);
     }

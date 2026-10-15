@@ -36,6 +36,7 @@ export interface ApiProduct {
   isFeatured: boolean;
   averageRating: string; // Returns decimal string e.g. "4.2"
   ratingsCount: number;
+  discount?: string | number;
   createdAt: string;
   updatedAt: string;
   reviews?: ApiReview[];
@@ -53,6 +54,10 @@ export interface ApiCategory {
 export interface ProductsResponse {
   results: number;
   products: ApiProduct[];
+  total?: number;
+  totalPages?: number;
+  totalResults?: number;
+  count?: number;
 }
 
 export interface CategoriesResponse {
@@ -65,6 +70,17 @@ export interface CategoriesResponse {
 export interface ReviewsResponse {
   result: number;
   reviews: ApiReview[];
+}
+
+export interface WishlistResponse {
+  results: number;
+  products: ApiProduct[];
+}
+
+export interface WishlistActionResponse {
+  message?: string;
+  id?: number;
+  products?: ApiProduct[];
 }
 
 export interface LoginRequest {
@@ -113,11 +129,18 @@ export interface CreateReviewRequest {
   rating: number;
 }
 
+export interface UpdateReviewRequest {
+  review?: string;
+  rating?: number;
+}
+
 export interface ProductFilterParams {
   page?: number;
   name?: string;
   minPrice?: number;
   maxPrice?: number;
+  category?: string;
+  discount?: boolean | string;
 }
 
 export interface ApiErrorResponse {

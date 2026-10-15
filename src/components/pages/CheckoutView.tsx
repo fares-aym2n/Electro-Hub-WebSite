@@ -269,20 +269,6 @@ export const CheckoutView: FC<CheckoutViewProps> = ({ onNavigate, onClearCart })
                   </label>
                 </div>
               </div>
-
-              {/* ========================================================= */}
-              {/* MIDDLE COLUMN: HEADPHONE ON PEDESTAL PHOTO */}
-              {/* ========================================================= */}
-              <div className="lg:col-span-4 hidden md:block">
-                <div className="rounded-2xl overflow-hidden shadow-xs">
-                  <img
-                    src="/assets/checkout-pedestal.jpg"
-                    alt="Headphones on pedestal"
-                    className="w-full h-auto max-h-[460px] object-cover"
-                  />
-                </div>
-              </div>
-
               {/* ========================================================= */}
               {/* RIGHT COLUMN: ORDER SUMMARY WITH REAL CART PRODUCTS */}
               {/* ========================================================= */}

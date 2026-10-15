@@ -13,19 +13,32 @@ export const productService = {
       page: params.page || 1,
     };
 
+    if (params.category && params.category.trim() && params.category.toUpperCase() !== 'ALL') {
+      queryParams.category = params.category.trim();
+    }
     if (params.name && params.name.trim()) {
       queryParams.name = params.name.trim();
     }
-    if (params.minPrice !== undefined && params.minPrice !== null) {
-      queryParams.minPrice = params.minPrice;
+    if (params.minPrice !== undefined && params.minPrice !== null && !isNaN(Number(params.minPrice))) {
+      queryParams.minPrice = Number(params.minPrice);
     }
-    if (params.maxPrice !== undefined && params.maxPrice !== null) {
-      queryParams.maxPrice = params.maxPrice;
+    if (params.maxPrice !== undefined && params.maxPrice !== null && !isNaN(Number(params.maxPrice))) {
+      queryParams.maxPrice = Number(params.maxPrice);
+    }
+    if (params.discount !== undefined && params.discount !== null && params.discount !== '') {
+      queryParams.discount = String(params.discount);
     }
 
     return apiClient.get<ProductsResponse>('/api/products', {
       params: queryParams,
     });
+  },
+
+  /**
+   * Fetch discounted offer products directly from the API using ?discount=true
+   */
+  async getDiscountedProducts(page = 1): Promise<ProductsResponse> {
+    return this.getProducts({ page, discount: true });
   },
 
   /**

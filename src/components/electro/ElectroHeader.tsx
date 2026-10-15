@@ -1,9 +1,20 @@
 import type { FC } from 'react';
 import { useState } from 'react';
-import { Menu, X, LogOut, User as UserIcon, Settings, KeyRound, Lock } from 'lucide-react';
+import {
+  Menu,
+  X,
+  LogOut,
+  User as UserIcon,
+  Settings,
+  KeyRound,
+  Lock,
+  ShoppingCart,
+  Heart,
+} from "lucide-react";
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useNavigation } from '../../context/NavigationContext';
+import { useFavorites } from "../../context/FavoritesContext";
 export type { PageId } from '../../context/NavigationContext';
 import { EditProfileModal } from '../profile/EditProfileModal';
 import { ChangePasswordModal } from '../profile/ChangePasswordModal';
@@ -20,6 +31,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
 
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { favoritesCount } = useFavorites();
   const { activePage, navigate, scrollToSection } = useNavigation();
 
   const cartCount = propCartCount !== undefined ? propCartCount : totalItems;
@@ -31,11 +43,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
   };
 
   const handleProductsClick = () => {
-    if (activePage === 'home') {
-      scrollToSection('products-section');
-    } else {
-      navigate('home', { scrollTo: 'products-section' });
-    }
+    navigate("products");
   };
 
   const handleCategoriesClick = () => {
@@ -50,10 +58,9 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
     <>
       <header className="bg-[#EFE0D3] border-b border-[#E5D7CA] text-[#111111] select-none sticky top-0 z-40">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 h-[68px] flex items-center justify-between">
-          
           {/* Brand Logo */}
           <div
-            onClick={() => navigate('home')}
+            onClick={() => navigate("home")}
             className="text-[22px] font-bold tracking-tight text-[#111111] cursor-pointer hover:opacity-80 transition shrink-0"
           >
             Electro Hub
@@ -62,18 +69,20 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
           {/* Center Navigation Links: HOME, PRODUCTS, CATEGORIES, ABOUT US, CONTACT US */}
           <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-[13px] font-semibold tracking-[0.06em] uppercase">
             <button
-              onClick={() => navigate('home')}
+              onClick={() => navigate("home")}
               className={`transition hover:text-[#C49B82] ${
-                activePage === 'home' ? 'text-[#C49B82]' : 'text-[#111111]'
+                activePage === "home" ? "text-[#C49B82]" : "text-[#111111]"
               }`}
             >
               HOME
             </button>
 
-            {/* Replaces Deals, New Arrivals & Support per Requirement 6 */}
+            {/* Direct navigation to Dedicated Product Listing Page */}
             <button
               onClick={handleProductsClick}
-              className="text-[#111111] hover:text-[#C49B82] transition"
+              className={`transition hover:text-[#C49B82] ${
+                activePage === "products" ? "text-[#C49B82]" : "text-[#111111]"
+              }`}
             >
               PRODUCTS
             </button>
@@ -86,18 +95,18 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             </button>
 
             <button
-              onClick={() => navigate('about')}
+              onClick={() => navigate("about")}
               className={`transition hover:text-[#C49B82] ${
-                activePage === 'about' ? 'text-[#C49B82]' : 'text-[#111111]'
+                activePage === "about" ? "text-[#C49B82]" : "text-[#111111]"
               }`}
             >
               ABOUT US
             </button>
 
             <button
-              onClick={() => navigate('contact')}
+              onClick={() => navigate("contact")}
               className={`transition hover:text-[#C49B82] ${
-                activePage === 'contact' ? 'text-[#C49B82]' : 'text-[#111111]'
+                activePage === "contact" ? "text-[#C49B82]" : "text-[#111111]"
               }`}
             >
               CONTACT US
@@ -108,10 +117,10 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
           <div className="hidden sm:flex items-center gap-5 lg:gap-7 text-[13px] font-semibold tracking-[0.06em] uppercase">
             <button
               onClick={() => {
-                if (activePage === 'home') {
-                  scrollToSection('search-filter-bar');
+                if (activePage === "home") {
+                  scrollToSection("search-filter-bar");
                 } else {
-                  navigate('home', { scrollTo: 'search-filter-bar' });
+                  navigate("home", { scrollTo: "search-filter-bar" });
                 }
               }}
               className="text-[#111111] hover:text-[#C49B82] transition"
@@ -123,22 +132,14 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             {!user ? (
               <>
                 <button
-                  onClick={() => navigate('signin')}
+                  onClick={() => navigate("signin")}
                   className={`transition hover:text-[#C49B82] ${
-                    activePage === 'signin' ? 'text-[#C49B82]' : 'text-[#111111]'
+                    activePage === "signin"
+                      ? "text-[#C49B82]"
+                      : "text-[#111111]"
                   }`}
                 >
                   SIGN IN
-                </button>
-                <button
-                  onClick={() => navigate('signup')}
-                  className={`px-3 py-1.5 rounded-lg border border-[#C49B82] hover:bg-[#CCA893] hover:text-[#111111] transition ${
-                    activePage === 'signup'
-                      ? 'bg-[#CCA893] text-[#111111]'
-                      : 'text-[#111111]'
-                  }`}
-                >
-                  SIGN UP
                 </button>
               </>
             ) : (
@@ -195,7 +196,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
                               <Lock className="w-3 h-3 text-[#C49B82] shrink-0" />
                               <span className="truncate">{user.email}</span>
                             </div>
-                            {user.role === 'admin' && (
+                            {user.role === "admin" && (
                               <span className="inline-block mt-1 text-[10px] font-bold bg-[#CCA893] text-[#111111] px-1.5 py-0.5 rounded uppercase">
                                 Verified Admin
                               </span>
@@ -243,14 +244,44 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               </div>
             )}
 
-            {/* Shopping Cart Button */}
+            {/* Wishlist / Favorites Heart Button */}
             <button
-              onClick={() => navigate('checkout')}
-              className={`transition hover:text-[#C49B82] ${
-                activePage === 'checkout' ? 'text-[#C49B82]' : 'text-[#111111]'
+              onClick={() => navigate("wishlist")}
+              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition flex items-center justify-center text-[#111111] hover:text-[#C49B82] ${
+                activePage === "wishlist" ? "text-[#C49B82]" : ""
               }`}
+              aria-label="Wishlist"
+              title="Wishlist / Favorites"
             >
-              CART {cartCount > 0 ? `(${cartCount})` : ''}
+              <Heart
+                className={`w-5 h-5 transition-transform active:scale-90 ${
+                  activePage === "wishlist" || favoritesCount > 0
+                    ? "fill-[#C49B82] text-[#C49B82]"
+                    : ""
+                }`}
+              />
+              {favoritesCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#C49B82] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs">
+                  {favoritesCount}
+                </span>
+              )}
+            </button>
+
+            {/* Shopping Cart Button with Icon */}
+            <button
+              onClick={() => navigate("checkout")}
+              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition flex items-center justify-center text-[#111111] hover:text-[#C49B82] ${
+                activePage === "checkout" ? "text-[#C49B82]" : ""
+              }`}
+              aria-label="Shopping Cart"
+              title="Shopping Cart"
+            >
+              <ShoppingCart className="w-5 h-5 transition-transform active:scale-90" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs">
+                  {cartCount}
+                </span>
+              )}
             </button>
           </div>
 
@@ -260,7 +291,11 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             className="md:hidden p-2 text-[#111111] hover:text-[#C49B82]"
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
 
@@ -269,7 +304,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
           <div className="md:hidden bg-[#EFE0D3] border-t border-[#E5D7CA] px-6 py-6 space-y-4 text-xs font-semibold tracking-wider uppercase">
             <button
               onClick={() => {
-                navigate('home');
+                navigate("home");
                 setMobileOpen(false);
               }}
               className="block w-full text-left py-2 hover:text-[#C49B82]"
@@ -281,7 +316,9 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
                 setMobileOpen(false);
                 handleProductsClick();
               }}
-              className="block w-full text-left py-2 hover:text-[#C49B82]"
+              className={`block w-full text-left py-2 hover:text-[#C49B82] ${
+                activePage === "products" ? "text-[#C49B82]" : ""
+              }`}
             >
               PRODUCTS
             </button>
@@ -296,7 +333,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             </button>
             <button
               onClick={() => {
-                navigate('about');
+                navigate("about");
                 setMobileOpen(false);
               }}
               className="block w-full text-left py-2 hover:text-[#C49B82]"
@@ -305,7 +342,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             </button>
             <button
               onClick={() => {
-                navigate('contact');
+                navigate("contact");
                 setMobileOpen(false);
               }}
               className="block w-full text-left py-2 hover:text-[#C49B82]"
@@ -316,7 +353,9 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             {user ? (
               <div className="pt-3 border-t border-[#DFD4C8] space-y-2">
                 <div className="text-xs text-[#666666] lowercase">
-                  Signed in as <strong className="text-[#111111]">{user.username}</strong> ({user.email})
+                  Signed in as{" "}
+                  <strong className="text-[#111111]">{user.username}</strong> (
+                  {user.email})
                 </div>
                 <button
                   onClick={() => {
@@ -347,7 +386,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               <div className="pt-3 border-t border-[#DFD4C8] flex gap-3">
                 <button
                   onClick={() => {
-                    navigate('signin');
+                    navigate("signin");
                     setMobileOpen(false);
                   }}
                   className="py-2 text-[#111111] hover:text-[#C49B82]"
@@ -356,7 +395,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
                 </button>
                 <button
                   onClick={() => {
-                    navigate('signup');
+                    navigate("signup");
                     setMobileOpen(false);
                   }}
                   className="py-2 text-[#C49B82] font-bold"
@@ -366,14 +405,52 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               </div>
             )}
 
+            {/* Wishlist Link in Mobile Drawer */}
             <button
               onClick={() => {
-                navigate('checkout');
+                navigate("wishlist");
                 setMobileOpen(false);
               }}
-              className="block w-full text-left py-2 hover:text-[#C49B82] border-t border-[#DFD4C8] pt-3"
+              className={`flex items-center justify-between w-full py-2 hover:text-[#C49B82] border-t border-[#DFD4C8] pt-3 ${
+                activePage === "wishlist" ? "text-[#C49B82]" : ""
+              }`}
+              aria-label="Wishlist"
             >
-              CART {cartCount > 0 ? `(${cartCount})` : ''}
+              <div className="flex items-center gap-2">
+                <Heart
+                  className={`w-4 h-4 ${
+                    favoritesCount > 0 ? "fill-[#C49B82] text-[#C49B82]" : ""
+                  }`}
+                />
+                <span>WISHLIST</span>
+              </div>
+              {favoritesCount > 0 && (
+                <span className="min-w-[18px] h-[18px] px-1.5 rounded-full bg-[#C49B82] text-[#111111] text-[10px] font-bold flex items-center justify-center">
+                  {favoritesCount}
+                </span>
+              )}
+            </button>
+
+            {/* Shopping Cart in Mobile Drawer */}
+            <button
+              onClick={() => {
+                navigate("checkout");
+                setMobileOpen(false);
+              }}
+              className={`flex items-center justify-between w-full py-2 hover:text-[#C49B82] ${
+                activePage === "checkout" ? "text-[#C49B82]" : ""
+              }`}
+              aria-label="Shopping Cart"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                <span>SHOPPING CART</span>
+              </div>
+              {cartCount > 0 && (
+                <span className="min-w-[18px] h-[18px] px-1.5 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
             </button>
           </div>
         )}
