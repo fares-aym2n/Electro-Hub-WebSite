@@ -78,14 +78,14 @@ export const HomeView: FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="bg-[#FBF6F0] min-h-[calc(100vh-140px)] py-8 lg:py-12">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 space-y-14 lg:space-y-20">
+    <div className="bg-[#FBF6F0] min-h-[calc(100vh-140px)] py-6 sm:py-8 lg:py-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 space-y-12 sm:space-y-14 lg:space-y-20">
         
         {/* ========================================================= */}
         {/* 1. HERO SPOTLIGHT BANNER                                  */}
         {/* ========================================================= */}
         {loadingHero ? (
-          <div className="rounded-3xl bg-[#EEE9E5] p-8 sm:p-12 lg:p-16 border border-[#E5D7CA] animate-pulse h-[420px] flex items-center justify-center">
+          <div className="rounded-3xl bg-[#EEE9E5] p-6 sm:p-12 lg:p-16 border border-[#E5D7CA] animate-pulse h-[360px] sm:h-[420px] flex items-center justify-center">
             <div className="text-center space-y-3">
               <div className="h-4 bg-[#DFD4C8] rounded w-32 mx-auto" />
               <div className="h-8 bg-[#DFD4C8] rounded w-72 mx-auto" />
@@ -93,7 +93,7 @@ export const HomeView: FC<HomeViewProps> = ({
             </div>
           </div>
         ) : featuredProduct ? (
-          <div className="relative rounded-3xl bg-gradient-to-br from-[#EEE9E5] via-[#EDE7E2] to-[#E5D7CA]/40 p-8 sm:p-12 lg:p-16 border border-[#E5D7CA] overflow-hidden shadow-xs">
+          <div className="relative rounded-3xl bg-gradient-to-br from-[#EEE9E5] via-[#EDE7E2] to-[#E5D7CA]/40 p-5 sm:p-12 lg:p-16 border border-[#E5D7CA] overflow-hidden shadow-xs">
             {/* Subtle decorative background aura */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#CCA893]/15 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
             <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-[#C49B82]/10 rounded-full blur-2xl pointer-events-none" />
@@ -106,17 +106,17 @@ export const HomeView: FC<HomeViewProps> = ({
                   Flagship Spotlight
                 </div>
 
-                <h1 className="text-[32px] sm:text-[42px] lg:text-[46px] font-bold text-[#111111] leading-[1.12] tracking-tight">
+                <h1 className="text-[26px] sm:text-[38px] lg:text-[46px] font-bold text-[#111111] leading-[1.14] tracking-tight">
                   {featuredProduct.name}
                 </h1>
 
-                <p className="text-[15px] sm:text-[16px] text-[#444444] leading-relaxed max-w-xl line-clamp-3">
+                <p className="text-[14px] sm:text-[16px] text-[#444444] leading-relaxed max-w-xl line-clamp-3">
                   {featuredProduct.description ||
                     "Experience industry-leading sound clarity, sophisticated ergonomics, and masterclass engineering built for true audio lovers."}
                 </p>
 
                 <div className="flex items-baseline gap-3 pt-1">
-                  <span className="text-[28px] sm:text-[34px] font-bold text-[#C49B82] tracking-tight">
+                  <span className="text-[24px] sm:text-[34px] font-bold text-[#C49B82] tracking-tight">
                     {formatPrice(featuredProduct.price)}
                   </span>
                   <span className="text-xs font-semibold uppercase text-[#777777] tracking-wider">
@@ -124,28 +124,28 @@ export const HomeView: FC<HomeViewProps> = ({
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 pt-3">
+                <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 pt-3">
                   <button
                     onClick={() => handleProductClick(featuredProduct.id)}
-                    className="h-12 px-8 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase flex items-center gap-2 transition active:scale-98 shadow-xs"
+                    className="h-12 px-6 sm:px-8 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
                   >
-                    View Details
+                    <span>View Details</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
 
                   <button
                     onClick={() => onAddToCart(featuredProduct)}
-                    className="h-12 px-8 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#C49B82] text-[#111111] font-bold text-[13px] tracking-[0.08em] uppercase transition active:scale-98"
+                    className="h-12 px-6 sm:px-8 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#C49B82] text-[#111111] font-bold text-[13px] tracking-[0.08em] uppercase transition active:scale-98 cursor-pointer text-center"
                   >
                     Add to Cart
                   </button>
 
                   <button
                     onClick={() => navigate("products")}
-                    className="h-12 px-6 rounded-xl bg-transparent hover:bg-[#FAF6F2]/80 text-[#555555] hover:text-[#111111] font-semibold text-[13px] tracking-[0.06em] uppercase transition flex items-center gap-2"
+                    className="h-12 px-5 sm:px-6 rounded-xl bg-transparent hover:bg-[#FAF6F2]/80 text-[#555555] hover:text-[#111111] font-semibold text-[13px] tracking-[0.06em] uppercase transition flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <ShoppingBag className="w-4 h-4" />
-                    Browse Catalog
+                    <span>Browse Catalog</span>
                   </button>
                 </div>
               </div>
@@ -235,12 +235,12 @@ export const HomeView: FC<HomeViewProps> = ({
           aria-label="Store Guarantees and Value Propositions"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-2"
         >
-          <div className="p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
-              <ShieldCheck className="w-6 h-6" />
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-3.5 sm:gap-4">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h4 className="text-[14px] font-bold text-[#111111] uppercase tracking-wide">
+              <h4 className="text-[13px] sm:text-[14px] font-bold text-[#111111] uppercase tracking-wide">
                 100% Genuine Tech
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
@@ -249,12 +249,12 @@ export const HomeView: FC<HomeViewProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
-              <Truck className="w-6 h-6" />
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-3.5 sm:gap-4">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
+              <Truck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h4 className="text-[14px] font-bold text-[#111111] uppercase tracking-wide">
+              <h4 className="text-[13px] sm:text-[14px] font-bold text-[#111111] uppercase tracking-wide">
                 Fast Nationwide Delivery
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
@@ -263,12 +263,12 @@ export const HomeView: FC<HomeViewProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
-              <CreditCard className="w-6 h-6" />
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-3.5 sm:gap-4">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
+              <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h4 className="text-[14px] font-bold text-[#111111] uppercase tracking-wide">
+              <h4 className="text-[13px] sm:text-[14px] font-bold text-[#111111] uppercase tracking-wide">
                 Flexible Payment
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
@@ -277,12 +277,12 @@ export const HomeView: FC<HomeViewProps> = ({
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
-              <Headphones className="w-6 h-6" />
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#EEE9E5] border border-[#E5D7CA] flex items-start gap-3.5 sm:gap-4">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#FAF6F2] text-[#C49B82] flex items-center justify-center shrink-0 border border-[#E5D7CA]">
+              <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h4 className="text-[14px] font-bold text-[#111111] uppercase tracking-wide">
+              <h4 className="text-[13px] sm:text-[14px] font-bold text-[#111111] uppercase tracking-wide">
                 Dedicated Support
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">

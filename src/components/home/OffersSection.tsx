@@ -198,17 +198,17 @@ export const OffersSection: FC<OffersSectionProps> = ({
         </div>
       ) : (
         /* Horizontal Carousel with Circular Navigation Arrows at the sides */
-        <div className="relative flex items-center gap-2 sm:gap-4">
+        <div className="relative flex items-center gap-1.5 sm:gap-4">
           {/* Circular Left Arrow Button */}
           <button
             type="button"
             onClick={() => handleScroll('left')}
             disabled={!canScrollLeft}
-            className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#EEE9E5] hover:bg-[#E5D7CA] border border-[#DFD4C8] hover:border-[#C49B82] text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 shadow-sm hover:shadow-md cursor-pointer z-10"
+            className="shrink-0 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-[#EEE9E5] hover:bg-[#E5D7CA] border border-[#DFD4C8] hover:border-[#C49B82] text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 shadow-sm hover:shadow-md cursor-pointer z-10"
             aria-label="Previous offers"
             title="Previous offers"
           >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
 
           {/* Carousel Scroll Track: Exactly 4 cards visible at a time on desktop */}
@@ -337,11 +337,11 @@ export const OffersSection: FC<OffersSectionProps> = ({
             type="button"
             onClick={() => handleScroll('right')}
             disabled={!canScrollRight}
-            className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#EEE9E5] hover:bg-[#E5D7CA] border border-[#DFD4C8] hover:border-[#C49B82] text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 shadow-sm hover:shadow-md cursor-pointer z-10"
+            className="shrink-0 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-[#EEE9E5] hover:bg-[#E5D7CA] border border-[#DFD4C8] hover:border-[#C49B82] text-[#111111] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 shadow-sm hover:shadow-md cursor-pointer z-10"
             aria-label="Next offers"
             title="Next offers"
           >
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
           </button>
         </div>
       )}

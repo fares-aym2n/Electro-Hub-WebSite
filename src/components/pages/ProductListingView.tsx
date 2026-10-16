@@ -339,7 +339,7 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
     <div className="min-h-screen bg-[#FBF6F0] text-[#111111] pb-24">
       {/* 1. Breadcrumb and Context Header */}
       <div className="border-b border-[#E5D7CA] bg-[#FAF6F2] py-4">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 flex items-center justify-between text-xs font-semibold text-[#555555]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 flex items-center justify-between text-xs font-semibold text-[#555555]">
           <div className="flex items-center gap-2">
             <span
               onClick={() => onNavigate('home')}
@@ -386,7 +386,7 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
         </div>
       </div>
 
-      <div id="products-grid-top" className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 py-8">
+      <div id="products-grid-top" className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* ========================================================= */}
           {/* DESKTOP FILTER SIDEBAR                                    */}
@@ -562,25 +562,25 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
               </div>
 
               {/* Controls: Mobile Filter Button & Sort Dropdown */}
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
                 {/* Mobile Filter Button */}
                 <button
                   onClick={() => setMobileFilterOpen(true)}
-                  className="lg:hidden px-4 py-2.5 rounded-xl bg-[#FAF6F2] border border-[#DFD4C8] hover:border-[#C49B82] text-xs font-bold text-[#111111] flex items-center gap-2 transition"
+                  className="lg:hidden px-3 sm:px-4 py-2.5 rounded-xl bg-[#FAF6F2] border border-[#DFD4C8] hover:border-[#C49B82] text-xs font-bold text-[#111111] flex items-center gap-1.5 sm:gap-2 transition cursor-pointer"
                 >
                   <Filter className="w-3.5 h-3.5 text-[#C49B82]" />
-                  Filters {hasActiveFilters && '•'}
+                  <span>Filters {hasActiveFilters && '•'}</span>
                 </button>
 
                 {/* Sort Dropdown */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-[#666666] uppercase hidden md:inline">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                  <span className="text-[11px] font-bold text-[#666666] uppercase hidden md:inline shrink-0">
                     Sort:
                   </span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="h-11 bg-[#FAF6F2] border border-[#DFD4C8] text-xs font-bold text-[#111111] rounded-xl px-3.5 focus:outline-none focus:border-[#C49B82] cursor-pointer"
+                    className="h-11 bg-[#FAF6F2] border border-[#DFD4C8] text-xs font-bold text-[#111111] rounded-xl px-2.5 sm:px-3.5 focus:outline-none focus:border-[#C49B82] cursor-pointer max-w-[160px] sm:max-w-none truncate"
                   >
                     <option value="featured">Featured Silicon</option>
                     <option value="price-asc">Price: Low to High</option>
@@ -721,7 +721,7 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
                   return (
                     <div
                       key={product.id}
-                      className="bg-[#EEE9E5] rounded-3xl p-6 flex flex-col justify-between hover:shadow-md transition duration-300 group border border-transparent hover:border-[#E5D7CA]"
+                      className="bg-[#EEE9E5] rounded-3xl p-4 sm:p-6 flex flex-col justify-between hover:shadow-md transition duration-300 group border border-transparent hover:border-[#E5D7CA]"
                     >
                       {/* Visual Container */}
                       <div
@@ -850,37 +850,53 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
                   items per page
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => {
                       setCurrentPage((p) => Math.max(1, p - 1));
                       scrollToTop();
                     }}
                     disabled={currentPage <= 1 || loading}
-                    className="h-10 px-4 rounded-xl bg-[#EEE9E5] border border-[#DFD4C8] text-xs font-bold text-[#111111] disabled:opacity-40 uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#E5D7CA] transition"
+                    className="h-10 px-3 sm:px-4 rounded-xl bg-[#EEE9E5] border border-[#DFD4C8] text-xs font-bold text-[#111111] disabled:opacity-40 uppercase tracking-wider flex items-center gap-1 hover:bg-[#E5D7CA] transition cursor-pointer"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
                   </button>
 
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                      <button
-                        key={pageNum}
-                        onClick={() => {
-                          setCurrentPage(pageNum);
-                          scrollToTop();
-                        }}
-                        disabled={loading}
-                        className={`w-10 h-10 rounded-xl text-xs font-bold transition ${
-                          currentPage === pageNum
-                            ? 'bg-[#CCA893] text-[#111111] shadow-2xs'
-                            : 'bg-[#EEE9E5] text-[#555555] hover:bg-[#E5D7CA] hover:text-[#111111]'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((pageNum) => {
+                        return (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          Math.abs(pageNum - currentPage) <= 1
+                        );
+                      })
+                      .map((pageNum, idx, arr) => {
+                        const prev = arr[idx - 1];
+                        const showEllipsis = prev && pageNum - prev > 1;
+                        return (
+                          <div key={pageNum} className="flex items-center">
+                            {showEllipsis && (
+                              <span className="px-1 text-xs text-[#888888]">…</span>
+                            )}
+                            <button
+                              onClick={() => {
+                                setCurrentPage(pageNum);
+                                scrollToTop();
+                              }}
+                              disabled={loading}
+                              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                currentPage === pageNum
+                                  ? 'bg-[#CCA893] text-[#111111] shadow-2xs'
+                                  : 'bg-[#EEE9E5] text-[#555555] hover:bg-[#E5D7CA] hover:text-[#111111]'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          </div>
+                        );
+                      })}
                   </div>
 
                   <button
@@ -889,9 +905,9 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
                       scrollToTop();
                     }}
                     disabled={currentPage >= totalPages || loading}
-                    className="h-10 px-4 rounded-xl bg-[#EEE9E5] border border-[#DFD4C8] text-xs font-bold text-[#111111] disabled:opacity-40 uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#E5D7CA] transition"
+                    className="h-10 px-3 sm:px-4 rounded-xl bg-[#EEE9E5] border border-[#DFD4C8] text-xs font-bold text-[#111111] disabled:opacity-40 uppercase tracking-wider flex items-center gap-1 hover:bg-[#E5D7CA] transition cursor-pointer"
                   >
-                    Next
+                    <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -910,7 +926,7 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
             onClick={() => setMobileFilterOpen(false)}
             className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
           />
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
             <div className="w-screen max-w-md bg-[#FAF6F2] p-6 text-[#111111] flex flex-col justify-between overflow-y-auto">
               <div className="space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-[#E5D7CA]">

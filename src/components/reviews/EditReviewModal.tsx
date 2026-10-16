@@ -92,7 +92,7 @@ export const EditReviewModal: React.FC<EditReviewModalProps> = ({
       }}
     >
       <div
-        className="w-full max-w-lg bg-[#FAF6F2] rounded-3xl border border-[#DFD4C8] shadow-2xl p-6 sm:p-8 space-y-6 relative animate-in zoom-in-95 duration-200"
+        className="w-full max-w-lg bg-[#FAF6F2] rounded-3xl border border-[#DFD4C8] shadow-2xl p-5 sm:p-8 space-y-6 relative max-h-[calc(100vh-2rem)] overflow-y-auto animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-review-title"

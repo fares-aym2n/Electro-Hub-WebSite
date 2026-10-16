@@ -18,7 +18,7 @@ export const WriteReviewView: FC<WriteReviewViewProps> = ({
   productId = 29, // Default to Sony WH-1000XM5
   onNavigate,
 }) => {
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -155,8 +155,9 @@ export const WriteReviewView: FC<WriteReviewViewProps> = ({
                   </div>
                 </div>
                 <button
-                  onClick={() => onNavigate('signin')}
-                  className="px-5 py-2 rounded-lg bg-[#CCA893] text-[#111111] font-bold text-xs uppercase tracking-wider shrink-0 hover:bg-[#C29D87]"
+                  type="button"
+                  onClick={() => openAuthModal('signin')}
+                  className="px-5 py-2 rounded-lg bg-[#CCA893] text-[#111111] font-bold text-xs uppercase tracking-wider shrink-0 hover:bg-[#C29D87] cursor-pointer"
                 >
                   Sign In Now
                 </button>

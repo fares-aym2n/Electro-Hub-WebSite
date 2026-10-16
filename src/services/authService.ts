@@ -15,6 +15,7 @@ import type {
 export const authService = {
   /**
    * Authenticate user with email and password
+   * Backend sets HttpOnly cookie 'token' and returns token payload
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const data = await apiClient.post<LoginResponse>('/api/users/auth/login', credentials);
@@ -59,7 +60,7 @@ export const authService = {
   },
 
   /**
-   * Retrieve current authenticated user profile
+   * Retrieve current authenticated user profile using cookie / session
    */
   async getMe(): Promise<ApiUser> {
     return apiClient.get<ApiUser>('/api/users/me', { requiresAuth: true });
@@ -89,21 +90,26 @@ export const authService = {
   },
 
   /**
-   * Clear session token
+   * Clear session token and notify backend logout
    */
-  logout(): void {
+  async logout(): Promise<void> {
     tokenStorage.remove();
+    try {
+      await apiClient.post('/api/users/auth/logout');
+    } catch {
+      // Gracefully ignore if backend logout endpoint is unavailable
+    }
   },
 
   /**
-   * Check if token is present in storage
+   * Check if token is present in memory
    */
   isAuthenticated(): boolean {
     return !!tokenStorage.get();
   },
 
   /**
-   * Get raw token string
+   * Get raw in-memory token string (if available)
    */
   getToken(): string | null {
     return tokenStorage.get();

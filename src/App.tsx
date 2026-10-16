@@ -13,32 +13,38 @@ import { AboutView } from './components/pages/AboutView';
 import { ContactView } from './components/pages/ContactView';
 import { ForgotPasswordView } from './components/pages/ForgotPasswordView';
 import { ResetPasswordView } from './components/pages/ResetPasswordView';
-import { AuthProvider } from './context/AuthContext';
+import { AuthModal } from './components/auth/AuthModal';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { NavigationProvider, useNavigation, type PageId } from './context/NavigationContext';
-import { productService } from './services/productService';
 import type { ApiProduct } from './types/api';
 
 function AppContent() {
   const { activePage, selectedProductId, navigate } = useNavigation();
-  const { totalItems, addToCart, clearCart, items } = useCart();
+  const { totalItems, addToCart, clearCart } = useCart();
+  const { openAuthModal } = useAuth();
 
-  // If cart is empty on initial mount, initialize with flagship Sony WH-1000XM5 (id 29)
+  // If user accesses /signin or /signup URL directly, show home with the auth modal open
   useEffect(() => {
-    if (items.length === 0) {
-      productService
-        .getProductById(29)
-        .then((prod) => {
-          addToCart(prod, 1);
-        })
-        .catch(() => {
-          // Graceful fallback if network is briefly unavailable
-        });
+    if (activePage === 'signin') {
+      openAuthModal('signin');
+      navigate('home', { replace: true });
+    } else if (activePage === 'signup') {
+      openAuthModal('signup');
+      navigate('home', { replace: true });
     }
-  }, []); // Run once on mount
+  }, [activePage, openAuthModal, navigate]);
 
   const handleNavigate = (page: PageId) => {
+    if (page === 'signin') {
+      openAuthModal('signin');
+      return;
+    }
+    if (page === 'signup') {
+      openAuthModal('signup');
+      return;
+    }
     navigate(page);
   };
 
@@ -130,6 +136,9 @@ function AppContent() {
 
       {/* 3. GLOBAL FOOTER (Synchronized Links) */}
       <ElectroFooter />
+
+      {/* 4. GLOBAL REUSABLE AUTHENTICATION MODAL (Noon-inspired popup) */}
+      <AuthModal />
     </div>
   );
 }

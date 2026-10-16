@@ -29,7 +29,7 @@ export const WishlistView: FC<WishlistViewProps> = ({
   onSelectProduct,
   onAddToCart,
 }) => {
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const {
     favorites,
     favoritesCount,
@@ -49,7 +49,7 @@ export const WishlistView: FC<WishlistViewProps> = ({
     <div className="min-h-[calc(100vh-140px)] bg-[#FBF6F0] text-[#111111] pb-24">
       {/* 1. Breadcrumbs */}
       <div className="border-b border-[#E5D7CA] bg-[#FAF6F2] py-4">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 flex items-center justify-between text-xs font-semibold text-[#555555]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 flex items-center justify-between text-xs font-semibold text-[#555555]">
           <div className="flex items-center gap-2">
             <span
               onClick={() => onNavigate('home')}
@@ -70,7 +70,7 @@ export const WishlistView: FC<WishlistViewProps> = ({
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 py-8 lg:py-12 space-y-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 py-6 sm:py-8 lg:py-12 space-y-8">
         {/* 2. Page Heading & Clear Action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EAE0D5] pb-6">
           <div>
@@ -128,8 +128,8 @@ export const WishlistView: FC<WishlistViewProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <button
                 type="button"
-                onClick={() => onNavigate('signin')}
-                className="h-12 px-8 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase flex items-center gap-2 transition active:scale-98 shadow-xs"
+                onClick={() => openAuthModal('signin')}
+                className="h-12 px-8 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase flex items-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
               >
                 <span>Sign In to Your Account</span>
                 <ArrowRight className="w-4 h-4" />

@@ -255,8 +255,8 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
   const currentDisplayImage = thumbnails[selectedThumb] || product.image || '/assets/sony-main.jpg';
 
   return (
-    <div className="bg-[#FBF6F0] min-h-[calc(100vh-140px)] py-8 lg:py-14">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 space-y-6">
+    <div className="bg-[#FBF6F0] min-h-[calc(100vh-140px)] py-6 sm:py-8 lg:py-14">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 space-y-6">
         {/* Back Navigation */}
         <div>
           <BackButton label="Back to Products" />
@@ -267,15 +267,15 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
           {/* ========================================================= */}
           {/* LEFT: THUMBNAILS + MAIN PRODUCT SHOWCASE CARD */}
           {/* ========================================================= */}
-          <div className="lg:col-span-5 flex gap-4 sm:gap-6">
-            {/* Thumbnails Column */}
+          <div className="lg:col-span-5 flex flex-col-reverse sm:flex-row gap-3 sm:gap-6">
+            {/* Thumbnails Row on mobile / Column on tablet+ */}
             {thumbnails.length > 1 && (
-              <div className="flex flex-col gap-3 shrink-0">
+              <div className="flex flex-row sm:flex-col gap-2.5 sm:gap-3 shrink-0 overflow-x-auto py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {thumbnails.map((src, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedThumb(index)}
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-[#EEE9E5] p-1 border transition ${
+                    className={`w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-xl overflow-hidden bg-[#EEE9E5] p-1 border transition cursor-pointer ${
                       selectedThumb === index
                         ? 'border-[#C49B82] ring-1 ring-[#C49B82]'
                         : 'border-transparent hover:border-[#DFD4C8]'
@@ -295,21 +295,21 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
             )}
 
             {/* Main Image Showcase Card */}
-            <div className="flex-1 bg-[#EEE9E5] rounded-3xl p-6 sm:p-8 flex items-center justify-center min-h-[380px] sm:min-h-[440px] relative">
+            <div className="flex-1 bg-[#EEE9E5] rounded-3xl p-4 sm:p-8 flex items-center justify-center min-h-[300px] sm:min-h-[440px] relative">
               <img
                 src={currentDisplayImage}
                 alt={product.name}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/assets/sony-main.jpg';
                 }}
-                className="w-full h-auto max-h-[380px] object-contain drop-shadow-md"
+                className="w-full h-auto max-h-[320px] sm:max-h-[380px] object-contain drop-shadow-md"
               />
 
               {/* Wishlist Heart Button */}
               <button
                 type="button"
                 onClick={() => toggleFavorite(product)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FAF6F2]/90 hover:bg-[#FAF6F2] border border-[#DFD4C8] hover:border-[#C49B82] flex items-center justify-center text-[#111111] transition-all duration-200 active:scale-90 shadow-2xs z-10"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#FAF6F2]/90 hover:bg-[#FAF6F2] border border-[#DFD4C8] hover:border-[#C49B82] flex items-center justify-center text-[#111111] transition-all duration-200 active:scale-90 shadow-2xs z-10 cursor-pointer"
                 aria-label={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
                 title={isFavorite(product.id) ? "Remove from favorites" : "Add to favorites"}
               >
@@ -332,7 +332,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
               <span className="text-[13px] font-medium tracking-[0.08em] text-[#C49B82] uppercase block mb-1">
                 {product.name.split(' ')[0] || 'ELECTRONICS'}
               </span>
-              <h1 className="text-[26px] sm:text-[30px] xl:text-[34px] font-bold text-[#111111] leading-[1.18] tracking-tight">
+              <h1 className="text-[24px] sm:text-[30px] xl:text-[34px] font-bold text-[#111111] leading-[1.18] tracking-tight">
                 {product.name}
               </h1>
             </div>
@@ -379,13 +379,13 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
               <div className="text-[12px] font-bold text-[#111111] uppercase tracking-[0.06em]">
                 QUANTITY
               </div>
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {/* Quantity Box */}
-                <div className="bg-[#EDE8E4] rounded-lg h-11 px-4 flex items-center justify-between gap-5 text-[#111111] font-semibold text-sm w-32 select-none">
+                <div className="bg-[#EDE8E4] rounded-lg h-11 px-3 sm:px-4 flex items-center justify-between gap-3 sm:gap-5 text-[#111111] font-semibold text-sm w-28 sm:w-32 shrink-0 select-none">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={product.stockQuantity <= 0}
-                    className="p-1 hover:text-[#C49B82] transition disabled:opacity-30"
+                    className="p-1 hover:text-[#C49B82] transition disabled:opacity-30 cursor-pointer"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
@@ -393,7 +393,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                   <button
                     onClick={() => setQuantity((q) => Math.min(product.stockQuantity || 99, q + 1))}
                     disabled={product.stockQuantity <= 0 || quantity >= product.stockQuantity}
-                    className="p-1 hover:text-[#C49B82] transition disabled:opacity-30"
+                    className="p-1 hover:text-[#C49B82] transition disabled:opacity-30 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -403,7 +403,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 <button
                   onClick={handleAdd}
                   disabled={product.stockQuantity <= 0}
-                  className={`font-bold text-[13px] tracking-[0.08em] uppercase h-11 px-8 rounded-lg transition active:scale-98 shadow-xs ${
+                  className={`flex-1 font-bold text-[12px] sm:text-[13px] tracking-[0.08em] uppercase h-11 px-4 sm:px-8 rounded-lg transition active:scale-98 shadow-xs cursor-pointer truncate ${
                     product.stockQuantity <= 0
                       ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
                       : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
@@ -416,7 +416,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => toggleFavorite(product)}
-                  className={`h-11 w-11 rounded-lg border border-[#DFD4C8] hover:border-[#C49B82] flex items-center justify-center transition active:scale-95 shadow-xs ${
+                  className={`h-11 w-11 shrink-0 rounded-lg border border-[#DFD4C8] hover:border-[#C49B82] flex items-center justify-center transition active:scale-95 shadow-xs cursor-pointer ${
                     isFavorite(product.id)
                       ? 'bg-[#E5D7CA] text-[#C49B82]'
                       : 'bg-[#EDE8E4] text-[#555555] hover:text-[#C49B82]'

@@ -29,7 +29,7 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user, logout, openAuthModal } = useAuth();
   const { totalItems } = useCart();
   const { favoritesCount } = useFavorites();
   const { activePage, navigate, scrollToSection } = useNavigation();
@@ -57,11 +57,11 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
   return (
     <>
       <header className="bg-[#EFE0D3] border-b border-[#E5D7CA] text-[#111111] select-none sticky top-0 z-40">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 h-[68px] flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-14 h-[64px] sm:h-[68px] flex items-center justify-between gap-2">
           {/* Brand Logo */}
           <div
             onClick={() => navigate("home")}
-            className="text-[22px] font-bold tracking-tight text-[#111111] cursor-pointer hover:opacity-80 transition shrink-0"
+            className="text-[19px] sm:text-[22px] font-bold tracking-tight text-[#111111] cursor-pointer hover:opacity-80 transition shrink-0"
           >
             Electro Hub
           </div>
@@ -113,8 +113,8 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             </button>
           </nav>
 
-          {/* Right Utility Navigation */}
-          <div className="hidden sm:flex items-center gap-5 lg:gap-7 text-[13px] font-semibold tracking-[0.06em] uppercase">
+          {/* Desktop Right Utility Navigation (md and up) */}
+          <div className="hidden md:flex items-center gap-5 lg:gap-7 text-[13px] font-semibold tracking-[0.06em] uppercase">
             <button
               onClick={() => {
                 if (activePage === "home") {
@@ -130,18 +130,15 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
 
             {/* When NOT Authenticated: Show Sign In & Sign Up */}
             {!user ? (
-              <>
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={() => navigate("signin")}
-                  className={`transition hover:text-[#C49B82] ${
-                    activePage === "signin"
-                      ? "text-[#C49B82]"
-                      : "text-[#111111]"
-                  }`}
+                  type="button"
+                  onClick={() => openAuthModal("signin")}
+                  className="transition hover:text-[#C49B82] text-[#111111] cursor-pointer"
                 >
                   SIGN IN
                 </button>
-              </>
+              </div>
             ) : (
               /* When Authenticated: Profile Icon Button */
               <div className="relative">
@@ -285,29 +282,72 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             </button>
           </div>
 
-          {/* Mobile Hamburger */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-[#111111] hover:text-[#C49B82]"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
+          {/* Mobile Action Bar (< md): Wishlist, Cart & Hamburger */}
+          <div className="flex md:hidden items-center gap-1 sm:gap-2">
+            {/* Wishlist Button on Mobile */}
+            <button
+              onClick={() => navigate("wishlist")}
+              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
+                activePage === "wishlist" ? "text-[#C49B82]" : ""
+              }`}
+              aria-label="Wishlist"
+              title="Wishlist / Favorites"
+            >
+              <Heart
+                className={`w-5 h-5 transition-transform active:scale-90 ${
+                  activePage === "wishlist" || favoritesCount > 0
+                    ? "fill-[#C49B82] text-[#C49B82]"
+                    : ""
+                }`}
+              />
+              {favoritesCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#C49B82] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs">
+                  {favoritesCount}
+                </span>
+              )}
+            </button>
+
+            {/* Shopping Cart Button on Mobile */}
+            <button
+              onClick={() => navigate("checkout")}
+              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
+                activePage === "checkout" ? "text-[#C49B82]" : ""
+              }`}
+              aria-label="Shopping Cart"
+              title="Shopping Cart"
+            >
+              <ShoppingCart className="w-5 h-5 transition-transform active:scale-90" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Hamburger Toggle */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="p-2 text-[#111111] hover:text-[#C49B82] cursor-pointer"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Drawer */}
         {mobileOpen && (
-          <div className="md:hidden bg-[#EFE0D3] border-t border-[#E5D7CA] px-6 py-6 space-y-4 text-xs font-semibold tracking-wider uppercase">
+          <div className="md:hidden bg-[#EFE0D3] border-t border-[#E5D7CA] px-4 sm:px-6 py-5 sm:py-6 space-y-3 sm:space-y-4 text-xs font-semibold tracking-wider uppercase">
             <button
               onClick={() => {
                 navigate("home");
                 setMobileOpen(false);
               }}
-              className="block w-full text-left py-2 hover:text-[#C49B82]"
+              className="block w-full text-left py-2.5 sm:py-2 hover:text-[#C49B82]"
             >
               HOME
             </button>
@@ -385,20 +425,22 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             ) : (
               <div className="pt-3 border-t border-[#DFD4C8] flex gap-3">
                 <button
+                  type="button"
                   onClick={() => {
-                    navigate("signin");
+                    openAuthModal("signin");
                     setMobileOpen(false);
                   }}
-                  className="py-2 text-[#111111] hover:text-[#C49B82]"
+                  className="py-2 text-[#111111] hover:text-[#C49B82] cursor-pointer"
                 >
                   SIGN IN
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
-                    navigate("signup");
+                    openAuthModal("signup");
                     setMobileOpen(false);
                   }}
-                  className="py-2 text-[#C49B82] font-bold"
+                  className="py-2 text-[#C49B82] font-bold cursor-pointer"
                 >
                   SIGN UP
                 </button>

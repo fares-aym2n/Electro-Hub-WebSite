@@ -83,6 +83,30 @@ export interface WishlistActionResponse {
   products?: ApiProduct[];
 }
 
+export interface ApiCartItem {
+  id: number;
+  quantity: number;
+  product: ApiProduct;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ApiCart {
+  id: number;
+  cartItems: ApiCartItem[];
+  totalPrice?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AddCartItemRequest {
+  quantity: number;
+}
+
+export interface UpdateCartItemRequest {
+  quantity: number;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;

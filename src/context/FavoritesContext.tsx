@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import type { ApiProduct } from '../types/api';
 import { wishlistService } from '../services/wishlistService';
 import { useAuth } from './AuthContext';
-import { useNavigation } from './NavigationContext';
 
 export interface FavoritesContextType {
   favorites: ApiProduct[];
@@ -20,8 +19,7 @@ export interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, token } = useAuth();
-  const { navigate } = useNavigation();
+  const { user, openAuthModal } = useAuth();
 
   const [favorites, setFavorites] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -30,9 +28,19 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Synchronous lock to prevent duplicate concurrent submissions for the same product
   const pendingProductIdsRef = useRef<Set<number>>(new Set());
 
-  // Fetch the current authenticated user's wishlist from GET /wishlist
+  // Clean up any obsolete localStorage favorites keys from older builds
+  useEffect(() => {
+    try {
+      localStorage.removeItem('electro_favorites');
+      localStorage.removeItem('electro_wishlist');
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Fetch the current authenticated user's wishlist from backend GET /api/whitelist
   const refreshWishlist = useCallback(async () => {
-    if (!token || !user) {
+    if (!user) {
       setFavorites([]);
       setLoading(false);
       setError(null);
@@ -55,7 +63,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setLoading(false);
     }
-  }, [token, user]);
+  }, [user]);
 
   // Synchronize when authenticated user changes (user isolation & session clean up)
   useEffect(() => {
@@ -71,8 +79,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addFavorite = useCallback(
     async (product: ApiProduct) => {
-      if (!token || !user) {
-        navigate('signin');
+      if (!user) {
+        openAuthModal('signin');
         return;
       }
 
@@ -94,19 +102,19 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         // Rollback state upon failure
         setFavorites(previousFavorites);
         if (err?.statusCode === 401) {
-          navigate('signin');
+          openAuthModal('signin');
         }
       } finally {
         pendingProductIdsRef.current.delete(product.id);
       }
     },
-    [token, user, favorites, navigate]
+    [user, favorites, openAuthModal]
   );
 
   const removeFavorite = useCallback(
     async (productId: number) => {
-      if (!token || !user) {
-        navigate('signin');
+      if (!user) {
+        openAuthModal('signin');
         return;
       }
 
@@ -128,13 +136,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setFavorites(previousFavorites);
         }
         if (err?.statusCode === 401) {
-          navigate('signin');
+          openAuthModal('signin');
         }
       } finally {
         pendingProductIdsRef.current.delete(productId);
       }
     },
-    [token, user, favorites, navigate]
+    [user, favorites, openAuthModal]
   );
 
   const toggleFavorite = useCallback(
@@ -149,7 +157,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 
   const clearFavorites = useCallback(async () => {
-    if (!token || !user || favorites.length === 0) {
+    if (!user || favorites.length === 0) {
       return;
     }
 
@@ -164,7 +172,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.error('Failed to clear wishlist completely:', err);
       setFavorites(previousFavorites);
     }
-  }, [token, user, favorites]);
+  }, [user, favorites]);
 
   const value: FavoritesContextType = {
     favorites,

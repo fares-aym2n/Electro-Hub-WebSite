@@ -2,7 +2,6 @@ import type { ApiErrorResponse } from '../types/api';
 
 // Use empty BASE_URL in development so requests route through Vite proxy (/api) avoiding CORS errors
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const TOKEN_KEY = 'electro_auth_token';
 
 export class ApiError extends Error {
   statusCode: number;
@@ -19,26 +18,30 @@ export class ApiError extends Error {
   }
 }
 
+// In-memory token storage (Do NOT store tokens or user secrets in localStorage)
+let inMemoryToken: string | null = null;
+
+// Purge any legacy localStorage keys from prior versions
+try {
+  localStorage.removeItem('electro_auth_token');
+  localStorage.removeItem('electro_cart_items');
+  localStorage.removeItem('electro_favorites');
+  localStorage.removeItem('electro_wishlist');
+} catch {
+  // Ignore storage access errors in restricted browser contexts
+}
+
 export const tokenStorage = {
-  get: (): string | null => {
-    try {
-      return localStorage.getItem(TOKEN_KEY);
-    } catch {
-      return null;
-    }
-  },
+  get: (): string | null => inMemoryToken,
   set: (token: string): void => {
-    try {
-      localStorage.setItem(TOKEN_KEY, token);
-    } catch (e) {
-      console.error('Failed to save auth token to localStorage', e);
-    }
+    inMemoryToken = token;
   },
   remove: (): void => {
+    inMemoryToken = null;
     try {
-      localStorage.removeItem(TOKEN_KEY);
-    } catch (e) {
-      console.error('Failed to remove auth token from localStorage', e);
+      localStorage.removeItem('electro_auth_token');
+    } catch {
+      // Ignore storage errors
     }
   },
 };
@@ -76,18 +79,18 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     reqHeaders['Content-Type'] = 'application/json';
   }
 
-  // Token handling
+  // Attach Authorization header if in-memory token is available
   const token = tokenStorage.get();
   if (token) {
     reqHeaders['Authorization'] = `Bearer ${token}`;
-  } else if (requiresAuth) {
-    throw new ApiError(401, 'Please sign in to complete this action', 'Unauthorized');
   }
 
   try {
     const response = await fetch(url, {
       ...customConfig,
       headers: reqHeaders,
+      // Credentials 'include' ensures HttpOnly session cookies are transmitted on all requests
+      credentials: 'include',
     });
 
     // 204 No Content
@@ -110,8 +113,8 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
 
     if (!response.ok) {
-      // If 401 Unauthorized, and we had a token, remove it
-      if (response.status === 401 && token) {
+      // If 401 Unauthorized, remove in-memory token
+      if (response.status === 401) {
         tokenStorage.remove();
       }
 

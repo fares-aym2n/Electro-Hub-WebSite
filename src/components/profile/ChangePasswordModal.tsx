@@ -77,7 +77,7 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-[#FAF6F2] rounded-3xl border border-[#DFD4C8] shadow-2xl p-6 sm:p-8 space-y-6 text-[#111111] relative">
+      <div className="w-full max-w-md bg-[#FAF6F2] rounded-3xl border border-[#DFD4C8] shadow-2xl p-5 sm:p-8 space-y-6 text-[#111111] relative max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#EAE0D5] pb-4">
           <div className="flex items-center gap-2.5">
