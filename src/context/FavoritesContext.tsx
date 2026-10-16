@@ -19,7 +19,7 @@ export interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, openAuthModal } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal } = useAuth();
 
   const [favorites, setFavorites] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -40,6 +40,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Fetch the current authenticated user's wishlist from backend GET /api/whitelist
   const refreshWishlist = useCallback(async () => {
+    if (authLoading) return;
+
     if (!user) {
       setFavorites([]);
       setLoading(false);
@@ -63,12 +65,14 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   // Synchronize when authenticated user changes (user isolation & session clean up)
   useEffect(() => {
-    refreshWishlist();
-  }, [refreshWishlist]);
+    if (!authLoading) {
+      refreshWishlist();
+    }
+  }, [authLoading, refreshWishlist]);
 
   const isFavorite = useCallback(
     (productId: number): boolean => {

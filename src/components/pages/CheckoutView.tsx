@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useState } from 'react';
-import { ChevronDown, CheckCircle2, ShoppingBag, Info, AlertCircle, Lock, ArrowRight, Trash2, Loader2 } from 'lucide-react';
+import { ChevronDown, CheckCircle2, ShoppingBag, AlertCircle, Lock, ArrowRight, Trash2, Loader2 } from 'lucide-react';
 import type { PageId } from '../electro/ElectroHeader';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -16,7 +16,7 @@ interface CheckoutViewProps {
 
 export const CheckoutView: FC<CheckoutViewProps> = ({ onNavigate, onClearCart }) => {
   const { items, subtotal, clearCart, updateQuantity, removeFromCart, loading, error: cartError } = useCart();
-  const { user, openAuthModal } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "card">("card");
   const [fullName, setFullName] = useState(() => user?.username || '');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -140,16 +140,14 @@ export const CheckoutView: FC<CheckoutViewProps> = ({ onNavigate, onClearCart })
           Checkout
         </h1>
 
-        {/* Backend Note Banner */}
-        <div className="mb-6 p-4 rounded-2xl bg-[#EEE9E5] border border-[#DFD4C8] text-xs text-[#555555] flex items-center gap-3">
-          <Info className="w-5 h-5 text-[#C49B82] shrink-0" />
-          <div>
-            <strong>Catalog Order Dispatch:</strong> Products in your cart are
-            synchronized with live backend catalog pricing and inventory.
+        {authLoading || loading ? (
+          <div className="py-20 text-center space-y-4 max-w-md mx-auto">
+            <Loader2 className="w-10 h-10 animate-spin text-[#C49B82] mx-auto" />
+            <p className="text-sm font-semibold text-[#666666]">
+              Restoring your cart and checkout details...
+            </p>
           </div>
-        </div>
-
-        {!user ? (
+        ) : !user ? (
           <div className="max-w-2xl mx-auto my-12 p-10 sm:p-14 rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] text-center space-y-6 shadow-xs">
             <div className="w-18 h-18 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] flex items-center justify-center mx-auto text-[#C49B82] shadow-2xs">
               <Lock className="w-9 h-9" />

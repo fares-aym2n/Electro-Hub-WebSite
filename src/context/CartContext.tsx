@@ -17,6 +17,12 @@ export interface CartContextType {
   subtotal: number;
   loading: boolean;
   error: string | null;
+  cartBump: boolean;
+  lastAddedNotice: { product: ApiProduct; quantity: number } | null;
+  dismissAddedNotice: () => void;
+  cartErrorNotice: string | null;
+  dismissErrorNotice: () => void;
+  isAddingProduct: (productId: number) => boolean;
   addToCart: (product: ApiProduct, quantity?: number) => Promise<boolean>;
   removeFromCart: (productId: number) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
@@ -27,24 +33,88 @@ export interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, openAuthModal } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal } = useAuth();
 
   const [cart, setCart] = useState<ApiCart | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Synchronous lock ref to prevent concurrent duplicate additions of the same product
-  const pendingProductIdsRef = useRef<Set<number>>(new Set());
+  // Cart animation & feedback states
+  const [cartBump, setCartBump] = useState<boolean>(false);
+  const [lastAddedNotice, setLastAddedNotice] = useState<{
+    product: ApiProduct;
+    quantity: number;
+  } | null>(null);
+  const [cartErrorNotice, setCartErrorNotice] = useState<string | null>(null);
+  const [addingProductIds, setAddingProductIds] = useState<Set<number>>(new Set());
 
-  // Clean up any legacy localStorage cart data
+  // Serialized promise queues per product to handle rapid repeated clicks smoothly
+  const productQueuesRef = useRef<Map<number, Promise<boolean>>>(new Map());
+  const bumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up timers on unmount
   useEffect(() => {
-    try {
-      localStorage.removeItem('electro_cart_items');
-    } catch {
-      // Ignore storage errors
+    return () => {
+      if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
+      if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+      if (errorNoticeTimerRef.current) clearTimeout(errorNoticeTimerRef.current);
+    };
+  }, []);
+
+  const dismissAddedNotice = useCallback(() => {
+    setLastAddedNotice(null);
+    if (noticeTimerRef.current) {
+      clearTimeout(noticeTimerRef.current);
+      noticeTimerRef.current = null;
     }
   }, []);
+
+  const dismissErrorNotice = useCallback(() => {
+    setCartErrorNotice(null);
+    if (errorNoticeTimerRef.current) {
+      clearTimeout(errorNoticeTimerRef.current);
+      errorNoticeTimerRef.current = null;
+    }
+  }, []);
+
+  const triggerCartErrorFeedback = useCallback((message: string) => {
+    setCartErrorNotice(message);
+    if (errorNoticeTimerRef.current) clearTimeout(errorNoticeTimerRef.current);
+    errorNoticeTimerRef.current = setTimeout(() => {
+      setCartErrorNotice(null);
+    }, 4500);
+  }, []);
+
+  const triggerCartFeedback = useCallback((product: ApiProduct, quantity: number) => {
+    // Dismiss any error toast
+    setCartErrorNotice(null);
+    if (errorNoticeTimerRef.current) {
+      clearTimeout(errorNoticeTimerRef.current);
+      errorNoticeTimerRef.current = null;
+    }
+
+    // 1. Trigger cart icon animation bump
+    setCartBump(true);
+    if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
+    bumpTimerRef.current = setTimeout(() => {
+      setCartBump(false);
+    }, 750);
+
+    // 2. Trigger floating notification toast
+    setLastAddedNotice({ product, quantity });
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => {
+      setLastAddedNotice(null);
+    }, 3500);
+  }, []);
+
+  const isAddingProduct = useCallback(
+    (productId: number): boolean => addingProductIds.has(productId),
+    [addingProductIds]
+  );
 
   const syncCartState = useCallback((backendCart: ApiCart | null) => {
     setCart(backendCart);
@@ -63,6 +133,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 1. Fetch user's cart from GET /api/carts
   const refreshCart = useCallback(async () => {
+    if (authLoading) return;
+
     if (!user) {
       syncCartState(null);
       setLoading(false);
@@ -85,12 +157,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  }, [user, syncCartState]);
+  }, [user, authLoading, syncCartState]);
 
   // Synchronize when authenticated user session changes
   useEffect(() => {
-    refreshCart();
-  }, [refreshCart]);
+    if (!authLoading) {
+      refreshCart();
+    }
+  }, [authLoading, refreshCart]);
 
   // 4. Delete item from cart: DELETE /api/carts/:productId
   const removeFromCart = useCallback(
@@ -154,7 +228,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         syncCartState(updatedCart);
       } catch (err: any) {
         console.error(`Failed to update quantity for product ${productId}:`, err);
-        // Rollback
         setItems(previousItems);
         setCart(previousCart);
         setError(err.message || 'Failed to update item quantity.');
@@ -166,24 +239,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user, items, cart, openAuthModal, removeFromCart, syncCartState]
   );
 
-  // 2. Add item to cart: POST /api/carts/:productId
+  // 2. Add item to cart: POST /api/carts/:productId (allows multiple clicks & increments quantity)
   const addToCart = useCallback(
-    async (product: ApiProduct, quantity: number = 1): Promise<boolean> => {
+    (product: ApiProduct, quantity: number = 1): Promise<boolean> => {
       if (!user) {
         openAuthModal('signin');
-        return false;
+        return Promise.resolve(false);
       }
-
-      if (pendingProductIdsRef.current.has(product.id)) {
-        return false;
-      }
-      pendingProductIdsRef.current.add(product.id);
 
       setError(null);
-      const previousItems = items;
-      const previousCart = cart;
 
-      // Optimistic update
+      // Track in-flight state for this product
+      setAddingProductIds((prev) => new Set(prev).add(product.id));
+
+      // Optimistic increment
       setItems((prev) => {
         const existingIndex = prev.findIndex((item) => item.product.id === product.id);
         if (existingIndex > -1) {
@@ -197,24 +266,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return [...prev, { product, quantity }];
       });
 
-      try {
-        const updatedCart = await cartService.addItem(product.id, quantity);
-        syncCartState(updatedCart);
-        return true;
-      } catch (err: any) {
-        console.error(`Failed to add product ${product.id} to cart:`, err);
-        setItems(previousItems);
-        setCart(previousCart);
-        setError(err.message || 'Failed to add item to cart.');
-        if (err?.statusCode === 401) {
-          openAuthModal('signin');
-        }
-        return false;
-      } finally {
-        pendingProductIdsRef.current.delete(product.id);
-      }
+      // Chain onto queue for this product to prevent conflicting in-flight requests
+      const currentQueue = productQueuesRef.current.get(product.id) || Promise.resolve(true);
+
+      const nextPromise = currentQueue
+        .catch(() => true)
+        .then(async () => {
+          try {
+            const updatedCart = await cartService.addItem(product.id, quantity);
+            syncCartState(updatedCart);
+            triggerCartFeedback(product, quantity);
+            return true;
+          } catch (err: any) {
+            console.error(`Failed to add product ${product.id} to cart:`, err);
+            // Revert state on error
+            await refreshCart();
+            const message = err.message || 'Failed to add item to cart.';
+            setError(message);
+            triggerCartErrorFeedback(message);
+            if (err?.statusCode === 401) {
+              openAuthModal('signin');
+            }
+            return false;
+          } finally {
+            setAddingProductIds((prev) => {
+              const next = new Set(prev);
+              next.delete(product.id);
+              return next;
+            });
+          }
+        });
+
+      productQueuesRef.current.set(product.id, nextPromise);
+      return nextPromise;
     },
-    [user, items, cart, openAuthModal, syncCartState]
+    [user, openAuthModal, syncCartState, triggerCartFeedback, triggerCartErrorFeedback, refreshCart]
   );
 
   // 5. Clear cart: DELETE /api/carts (204 No Content)
@@ -237,8 +323,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setItems(previousItems);
       setCart(previousCart);
       setError(err.message || 'Failed to clear cart.');
+      if (err?.statusCode === 401) {
+        openAuthModal('signin');
+      }
+      throw err;
     }
-  }, [user, items, cart, syncCartState]);
+  }, [user, items, cart, openAuthModal, syncCartState]);
 
   // Derived properties
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -261,6 +351,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subtotal,
         loading,
         error,
+        cartBump,
+        lastAddedNotice,
+        dismissAddedNotice,
+        cartErrorNotice,
+        dismissErrorNotice,
+        isAddingProduct,
         addToCart,
         removeFromCart,
         updateQuantity,

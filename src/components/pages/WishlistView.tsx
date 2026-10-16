@@ -15,6 +15,7 @@ import type { PageId } from '../electro/ElectroHeader';
 import type { ApiProduct } from '../../types/api';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { calculateDiscountPricing } from '../../services/offersService';
 import { formatPrice, formatRating } from '../../utils/formatters';
 
@@ -29,7 +30,8 @@ export const WishlistView: FC<WishlistViewProps> = ({
   onSelectProduct,
   onAddToCart,
 }) => {
-  const { user, openAuthModal } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal } = useAuth();
+  const { isAddingProduct } = useCart();
   const {
     favorites,
     favoritesCount,
@@ -109,8 +111,26 @@ export const WishlistView: FC<WishlistViewProps> = ({
           )}
         </div>
 
-        {/* 3. Unauthenticated State */}
-        {!user ? (
+        {/* 3. Loading Skeleton */}
+        {authLoading || loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-[#EEE9E5] rounded-3xl p-5 flex flex-col justify-between animate-pulse h-[420px]"
+              >
+                <div className="h-52 bg-[#DFD4C8]/50 rounded-2xl w-full" />
+                <div className="space-y-3 pt-4">
+                  <div className="h-3 bg-[#DFD4C8] rounded w-1/4" />
+                  <div className="h-5 bg-[#DFD4C8] rounded w-3/4" />
+                  <div className="h-4 bg-[#DFD4C8]/60 rounded w-1/2" />
+                  <div className="h-9 bg-[#DFD4C8] rounded w-full pt-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : !user ? (
+          /* 4. Unauthenticated State */
           <div className="rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] p-12 sm:p-16 text-center max-w-2xl mx-auto space-y-6 shadow-xs">
             <div className="w-20 h-20 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] flex items-center justify-center mx-auto text-[#C49B82] shadow-2xs">
               <Lock className="w-10 h-10" />
@@ -142,24 +162,6 @@ export const WishlistView: FC<WishlistViewProps> = ({
                 Explore Products
               </button>
             </div>
-          </div>
-        ) : loading ? (
-          /* 4. Loading Skeleton */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-[#EEE9E5] rounded-3xl p-5 flex flex-col justify-between animate-pulse h-[420px]"
-              >
-                <div className="h-52 bg-[#DFD4C8]/50 rounded-2xl w-full" />
-                <div className="space-y-3 pt-4">
-                  <div className="h-3 bg-[#DFD4C8] rounded w-1/4" />
-                  <div className="h-5 bg-[#DFD4C8] rounded w-3/4" />
-                  <div className="h-4 bg-[#DFD4C8]/60 rounded w-1/2" />
-                  <div className="h-9 bg-[#DFD4C8] rounded w-full pt-2" />
-                </div>
-              </div>
-            ))}
           </div>
         ) : error ? (
           /* 5. Error State */
@@ -311,19 +313,36 @@ export const WishlistView: FC<WishlistViewProps> = ({
                         )}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onAddToCart(product)}
-                        disabled={product.stockQuantity <= 0}
-                        className={`h-10 px-4 rounded-xl font-bold text-[11px] tracking-[0.08em] uppercase transition active:scale-95 shadow-xs flex items-center gap-1.5 ${
-                          product.stockQuantity <= 0
-                            ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
-                            : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
-                        }`}
-                      >
-                        <ShoppingCart className="w-3.5 h-3.5" />
-                        <span>{product.stockQuantity <= 0 ? 'SOLD' : 'ADD'}</span>
-                      </button>
+                      {(() => {
+                        const isAdding = isAddingProduct(product.id);
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => onAddToCart(product)}
+                            disabled={product.stockQuantity <= 0}
+                            className={`h-10 px-4 rounded-xl font-bold text-[11px] tracking-[0.08em] uppercase transition-all duration-200 active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                              product.stockQuantity <= 0
+                                ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
+                                : isAdding
+                                ? 'bg-[#BFA088] text-[#1A1A1A]'
+                                : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
+                            }`}
+                          >
+                            {isAdding ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <ShoppingCart className="w-3.5 h-3.5" />
+                            )}
+                            <span>
+                              {product.stockQuantity <= 0
+                                ? 'SOLD'
+                                : isAdding
+                                ? 'ADDING...'
+                                : 'ADD'}
+                            </span>
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

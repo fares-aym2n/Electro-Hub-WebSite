@@ -9,11 +9,13 @@ import {
   Sparkles,
   Layers,
   ShoppingBag,
+  RefreshCw,
 } from "lucide-react";
 import type { PageId } from "../electro/ElectroHeader";
 import type { ApiProduct } from "../../types/api";
 import { productService } from "../../services/productService";
 import { useNavigation } from "../../context/NavigationContext";
+import { useCart } from "../../context/CartContext";
 import { formatPrice } from "../../utils/formatters";
 import { CategoryCarousel } from "../home/CategoryCarousel";
 import { OffersSection } from "../home/OffersSection";
@@ -30,6 +32,7 @@ export const HomeView: FC<HomeViewProps> = ({
   onAddToCart,
 }) => {
   const { navigate } = useNavigation();
+  const { isAddingProduct } = useCart();
   const [featuredProduct, setFeaturedProduct] = useState<ApiProduct | null>(null);
   const [loadingHero, setLoadingHero] = useState<boolean>(true);
 
@@ -135,9 +138,17 @@ export const HomeView: FC<HomeViewProps> = ({
 
                   <button
                     onClick={() => onAddToCart(featuredProduct)}
-                    className="h-12 px-6 sm:px-8 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#C49B82] text-[#111111] font-bold text-[13px] tracking-[0.08em] uppercase transition active:scale-98 cursor-pointer text-center"
+                    disabled={isAddingProduct(featuredProduct.id)}
+                    className="h-12 px-6 sm:px-8 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#C49B82] text-[#111111] font-bold text-[13px] tracking-[0.08em] uppercase transition active:scale-98 cursor-pointer text-center flex items-center justify-center gap-2"
                   >
-                    Add to Cart
+                    {isAddingProduct(featuredProduct.id) ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-[#C49B82]" />
+                        <span>Adding...</span>
+                      </>
+                    ) : (
+                      <span>Add to Cart</span>
+                    )}
                   </button>
 
                   <button

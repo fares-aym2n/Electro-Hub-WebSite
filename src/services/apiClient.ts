@@ -18,28 +18,43 @@ export class ApiError extends Error {
   }
 }
 
-// In-memory token storage (Do NOT store tokens or user secrets in localStorage)
-let inMemoryToken: string | null = null;
+const TOKEN_KEY = 'electro_auth_token';
 
-// Purge any legacy localStorage keys from prior versions
+let inMemoryToken: string | null = null;
 try {
-  localStorage.removeItem('electro_auth_token');
-  localStorage.removeItem('electro_cart_items');
-  localStorage.removeItem('electro_favorites');
-  localStorage.removeItem('electro_wishlist');
+  inMemoryToken = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
 } catch {
-  // Ignore storage access errors in restricted browser contexts
+  // Ignore storage access errors
 }
 
 export const tokenStorage = {
-  get: (): string | null => inMemoryToken,
+  get: (): string | null => {
+    if (inMemoryToken) return inMemoryToken;
+    try {
+      if (typeof window !== 'undefined') {
+        inMemoryToken = localStorage.getItem(TOKEN_KEY);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return inMemoryToken;
+  },
   set: (token: string): void => {
     inMemoryToken = token;
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(TOKEN_KEY, token);
+      }
+    } catch {
+      // Ignore storage errors
+    }
   },
   remove: (): void => {
     inMemoryToken = null;
     try {
-      localStorage.removeItem('electro_auth_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(TOKEN_KEY);
+      }
     } catch {
       // Ignore storage errors
     }

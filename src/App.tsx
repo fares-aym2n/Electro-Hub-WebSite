@@ -17,6 +17,7 @@ import { PaymentSuccessView } from './components/pages/PaymentSuccessView';
 import { PaymentCancelView } from './components/pages/PaymentCancelView';
 import { OrdersView } from './components/pages/OrdersView';
 import { AuthModal } from './components/auth/AuthModal';
+import { CartToast } from './components/common/CartToast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
@@ -56,7 +57,7 @@ function AppContent() {
   };
 
   const handleAddToCart = (product: ApiProduct, quantity: number = 1) => {
-    addToCart(product, quantity);
+    return addToCart(product, quantity);
   };
 
   return (
@@ -157,6 +158,9 @@ function AppContent() {
 
       {/* 4. GLOBAL REUSABLE AUTHENTICATION MODAL (Noon-inspired popup) */}
       <AuthModal />
+
+      {/* 5. FLOATING CART NOTIFICATION TOAST */}
+      <CartToast />
     </div>
   );
 }

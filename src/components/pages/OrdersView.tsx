@@ -40,7 +40,7 @@ interface OrdersViewProps {
 type FilterTab = 'all' | 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 
 export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct }) => {
-  const { user, openAuthModal } = useAuth();
+  const { user, isLoading: authLoading, openAuthModal } = useAuth();
   const [orders, setOrders] = useState<UserOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,6 +48,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const fetchOrders = useCallback(async (isManualRefresh = false) => {
+    if (authLoading) return;
     if (!user) {
       setLoading(false);
       return;
@@ -73,11 +74,13 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (!authLoading) {
+      fetchOrders();
+    }
+  }, [authLoading, fetchOrders]);
 
   // Tab filtering
   const filteredOrders = useMemo(() => {
@@ -276,8 +279,34 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
           )}
         </div>
 
-        {/* 3. Unauthenticated State */}
-        {!user ? (
+        {/* 3. Loading Skeleton */}
+        {authLoading || loading ? (
+          <div className="py-10 space-y-4">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#777777] uppercase tracking-wider">
+              <RefreshCw className="w-4 h-4 animate-spin text-[#C49B82]" />
+              <span>Fetching your order records from server...</span>
+            </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className="rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] p-6 sm:p-8 animate-pulse space-y-4"
+                >
+                  <div className="flex justify-between items-center pb-4 border-b border-[#DFD4C8]">
+                    <div className="h-5 bg-[#DFD4C8] rounded w-48"></div>
+                    <div className="h-6 bg-[#DFD4C8] rounded-full w-24"></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="h-12 bg-[#DFD4C8] rounded-xl"></div>
+                    <div className="h-12 bg-[#DFD4C8] rounded-xl"></div>
+                    <div className="h-12 bg-[#DFD4C8] rounded-xl"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : !user ? (
+          /* 4. Unauthenticated State */
           <div className="rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] p-12 sm:p-16 text-center max-w-2xl mx-auto my-12 space-y-6 shadow-xs">
             <div className="w-20 h-20 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] flex items-center justify-center mx-auto text-[#C49B82] shadow-2xs">
               <Lock className="w-10 h-10" />
@@ -309,32 +338,6 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
               >
                 Browse Catalog
               </button>
-            </div>
-          </div>
-        ) : loading ? (
-          /* 4. Loading Skeleton */
-          <div className="py-10 space-y-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#777777] uppercase tracking-wider">
-              <RefreshCw className="w-4 h-4 animate-spin text-[#C49B82]" />
-              <span>Fetching your order records from server...</span>
-            </div>
-            <div className="space-y-4">
-              {[1, 2, 3].map((n) => (
-                <div
-                  key={n}
-                  className="rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] p-6 sm:p-8 animate-pulse space-y-4"
-                >
-                  <div className="flex justify-between items-center pb-4 border-b border-[#DFD4C8]">
-                    <div className="h-5 bg-[#DFD4C8] rounded w-48"></div>
-                    <div className="h-6 bg-[#DFD4C8] rounded-full w-24"></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="h-12 bg-[#DFD4C8] rounded-xl"></div>
-                    <div className="h-12 bg-[#DFD4C8] rounded-xl"></div>
-                    <div className="h-12 bg-[#DFD4C8] rounded-xl"></div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         ) : error ? (

@@ -18,6 +18,7 @@ import { productService } from '../../services/productService';
 import { reviewService } from '../../services/reviewService';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { formatPrice, formatRating, formatDate } from '../../utils/formatters';
 import { BackButton } from '../common/BackButton';
 import { EditReviewModal } from '../reviews/EditReviewModal';
@@ -26,7 +27,7 @@ import { DeleteReviewModal } from '../reviews/DeleteReviewModal';
 interface ProductDetailsViewProps {
   productId?: number;
   onNavigate: (page: PageId) => void;
-  onAddToCart: (product: ApiProduct, quantity: number) => void;
+  onAddToCart: (product: ApiProduct, quantity: number) => Promise<boolean> | void;
 }
 
 export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
@@ -36,6 +37,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
 }) => {
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isAddingProduct } = useCart();
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [reviews, setReviews] = useState<ApiReview[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -191,11 +193,13 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
     }, 4000);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!product) return;
-    onAddToCart(product, quantity);
-    setAddedNotice(true);
-    setTimeout(() => setAddedNotice(false), 2500);
+    const res = await onAddToCart(product, quantity);
+    if (res !== false) {
+      setAddedNotice(true);
+      setTimeout(() => setAddedNotice(false), 2500);
+    }
   };
 
   const handleBuyNow = () => {
@@ -400,17 +404,31 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                 </div>
 
                 {/* Add to Cart Button */}
-                <button
-                  onClick={handleAdd}
-                  disabled={product.stockQuantity <= 0}
-                  className={`flex-1 font-bold text-[12px] sm:text-[13px] tracking-[0.08em] uppercase h-11 px-4 sm:px-8 rounded-lg transition active:scale-98 shadow-xs cursor-pointer truncate ${
-                    product.stockQuantity <= 0
-                      ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
-                      : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
-                  }`}
-                >
-                  ADD TO CART
-                </button>
+                {(() => {
+                  const isAdding = product ? isAddingProduct(product.id) : false;
+                  return (
+                    <button
+                      onClick={handleAdd}
+                      disabled={product.stockQuantity <= 0}
+                      className={`flex-1 font-bold text-[12px] sm:text-[13px] tracking-[0.08em] uppercase h-11 px-4 sm:px-8 rounded-lg transition-all duration-200 active:scale-98 shadow-xs cursor-pointer truncate flex items-center justify-center gap-2 ${
+                        product.stockQuantity <= 0
+                          ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
+                          : isAdding
+                          ? 'bg-[#BFA088] text-[#1A1A1A]'
+                          : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
+                      }`}
+                    >
+                      {isAdding ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin text-[#1A1A1A]" />
+                          <span>ADDING...</span>
+                        </>
+                      ) : (
+                        <span>ADD TO CART</span>
+                      )}
+                    </button>
+                  );
+                })()}
 
                 {/* Wishlist Heart Button */}
                 <button
