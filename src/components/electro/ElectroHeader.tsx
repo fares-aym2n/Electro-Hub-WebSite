@@ -10,6 +10,7 @@ import {
   Lock,
   ShoppingCart,
   Heart,
+  Package,
 } from "lucide-react";
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -207,6 +208,16 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
                         <button
                           onClick={() => {
                             setAccountMenuOpen(false);
+                            navigate('orders');
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-[#111111] hover:bg-[#EEE9E5] flex items-center gap-2.5 font-medium transition cursor-pointer"
+                        >
+                          <Package className="w-4 h-4 text-[#C49B82]" />
+                          My Orders
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAccountMenuOpen(false);
                             setIsEditProfileOpen(true);
                           }}
                           className="w-full text-left px-3 py-2 rounded-xl text-[#111111] hover:bg-[#EEE9E5] flex items-center gap-2.5 font-medium transition"
@@ -397,6 +408,15 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
                   <strong className="text-[#111111]">{user.username}</strong> (
                   {user.email})
                 </div>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    navigate('orders');
+                  }}
+                  className="block w-full text-left py-1 text-[#111111] hover:text-[#C49B82] font-semibold"
+                >
+                  My Orders
+                </button>
                 <button
                   onClick={() => {
                     setMobileOpen(false);

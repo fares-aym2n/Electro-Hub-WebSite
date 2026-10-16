@@ -8,11 +8,14 @@ export type PageId =
   | 'signin'
   | 'checkout'
   | 'wishlist'
+  | 'orders'
   | 'review'
   | 'about'
   | 'contact'
   | 'forgot-password'
-  | 'reset-password';
+  | 'reset-password'
+  | 'payment-success'
+  | 'payment-cancel';
 
 export interface NavigationState {
   page: PageId;
@@ -101,6 +104,10 @@ function parseUrlToRoute(): NavigationState {
     return { page: 'wishlist', category: categoryParam };
   }
 
+  if (path === '/orders' || path === '/my-orders') {
+    return { page: 'orders', category: categoryParam };
+  }
+
   if (path === '/about' || path === '/about-us') {
     return { page: 'about', category: categoryParam };
   }
@@ -152,6 +159,14 @@ function parseUrlToRoute(): NavigationState {
     };
   }
 
+  if (path === '/payment-success' || path.startsWith('/payment-success')) {
+    return { page: 'payment-success', category: categoryParam };
+  }
+
+  if (path === '/payment-cancel' || path.startsWith('/payment-cancel')) {
+    return { page: 'payment-cancel', category: categoryParam };
+  }
+
   // Default to Home
   return {
     page: 'home',
@@ -186,6 +201,8 @@ function buildUrl(
     path = '/checkout';
   } else if (page === 'wishlist') {
     path = '/wishlist';
+  } else if (page === 'orders') {
+    path = '/orders';
   } else if (page === 'about') {
     path = '/about';
   } else if (page === 'contact') {
@@ -198,6 +215,10 @@ function buildUrl(
     } else {
       path = '/reset-password';
     }
+  } else if (page === 'payment-success') {
+    path = '/payment-success';
+  } else if (page === 'payment-cancel') {
+    path = '/payment-cancel';
   }
 
   const queryParts: string[] = [];

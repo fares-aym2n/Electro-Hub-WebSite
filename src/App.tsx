@@ -13,6 +13,9 @@ import { AboutView } from './components/pages/AboutView';
 import { ContactView } from './components/pages/ContactView';
 import { ForgotPasswordView } from './components/pages/ForgotPasswordView';
 import { ResetPasswordView } from './components/pages/ResetPasswordView';
+import { PaymentSuccessView } from './components/pages/PaymentSuccessView';
+import { PaymentCancelView } from './components/pages/PaymentCancelView';
+import { OrdersView } from './components/pages/OrdersView';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
@@ -110,6 +113,13 @@ function AppContent() {
           />
         )}
 
+        {activePage === 'orders' && (
+          <OrdersView
+            onNavigate={handleNavigate}
+            onSelectProduct={handleSelectProduct}
+          />
+        )}
+
         {activePage === 'review' && (
           <WriteReviewView
             productId={selectedProductId}
@@ -131,6 +141,14 @@ function AppContent() {
 
         {activePage === 'reset-password' && (
           <ResetPasswordView onNavigate={handleNavigate} />
+        )}
+
+        {activePage === 'payment-success' && (
+          <PaymentSuccessView onNavigate={handleNavigate} />
+        )}
+
+        {activePage === 'payment-cancel' && (
+          <PaymentCancelView onNavigate={handleNavigate} />
         )}
       </main>
 

@@ -23,11 +23,14 @@ export const ReferenceCompareModal: FC<ReferenceCompareModalProps> = ({
     'signin': '/references/sign-in.jpg',
     'checkout': '/references/checkout.jpg',
     'wishlist': '/references/product-details.jpg',
+    'orders': '/references/checkout.jpg',
     'review': '/references/write-review.jpg',
     'about': '/references/product-details.jpg',
     'contact': '/references/product-details.jpg',
     'forgot-password': '/references/sign-in.jpg',
     'reset-password': '/references/sign-in.jpg',
+    'payment-success': '/references/checkout.jpg',
+    'payment-cancel': '/references/checkout.jpg',
   };
 
   const refTitleMap: Record<PageId, string> = {
@@ -38,11 +41,14 @@ export const ReferenceCompareModal: FC<ReferenceCompareModalProps> = ({
     'signin': 'Approved Reference: Sign In (Welcome back)',
     'checkout': 'Approved Reference: Checkout (Shipping, Pedestal, Order Summary)',
     'wishlist': 'Favorites & Wishlist Design System',
+    'orders': 'Customer Order History & Tracking',
     'review': 'Approved Reference: Write a Review (Share your experience)',
     'about': 'About Us Design System',
     'contact': 'Contact Us Design System',
     'forgot-password': 'Forgot Password Page',
     'reset-password': 'Reset Password Page',
+    'payment-success': 'Payment Success Confirmation Page',
+    'payment-cancel': 'Payment Cancellation Page',
   };
 
   return (
