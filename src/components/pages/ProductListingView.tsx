@@ -24,7 +24,7 @@ import { categoryService } from '../../services/categoryService';
 import { calculateDiscountPricing } from '../../services/offersService';
 import { useNavigation } from '../../context/NavigationContext';
 import { useFavorites } from '../../context/FavoritesContext';
-import { useCart, type AddToCartOptions } from '../../context/CartContext';
+import type { AddToCartOptions } from '../../context/CartContext';
 import { formatPrice, formatRating } from '../../utils/formatters';
 import { DualPriceSlider } from '../catalog/DualPriceSlider';
 
@@ -44,7 +44,6 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
 }) => {
   const { activeCategory, setActiveCategory, discountFilter, setDiscountFilter } = useNavigation();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { isAddingProduct } = useCart();
 
   // 1. Initial State synchronized with URL parameters if present
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -825,9 +824,6 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
                             )}
                           </div>
 
-                          {(() => {
-                            const isAdding = isAddingProduct(product.id);
-                            return (
                               <button
                                 onClick={(e) => {
                                   const cardEl = e.currentTarget.closest('[data-product-card]') as HTMLElement | null;
@@ -848,24 +844,12 @@ export const ProductListingView: FC<ProductListingViewProps> = ({
                                 className={`h-10 px-4 rounded-xl font-bold text-[11px] tracking-wider uppercase transition-all duration-200 active:scale-95 shadow-2xs flex items-center gap-1.5 cursor-pointer ${
                                   product.stockQuantity <= 0
                                     ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
-                                    : isAdding
-                                    ? 'bg-[#BFA088] text-[#1A1A1A]'
                                     : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
                                 }`}
                               >
-                                {isAdding ? (
-                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <ShoppingCart className="w-3.5 h-3.5" />
-                                )}
-                                {product.stockQuantity <= 0
-                                  ? 'Sold Out'
-                                  : isAdding
-                                  ? 'Adding...'
-                                  : 'Add'}
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                <span>{product.stockQuantity <= 0 ? 'Sold Out' : 'Add'}</span>
                               </button>
-                            );
-                          })()}
                         </div>
                       </div>
                     </div>

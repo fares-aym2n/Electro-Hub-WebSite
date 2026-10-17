@@ -4,20 +4,15 @@ import {
   CheckCircle2,
   ShoppingBag,
   ArrowRight,
-  ShieldCheck,
-  Truck,
-  Copy,
-  Check,
-  Home,
-  Clock,
-  Sparkles,
   Package,
+  Receipt,
+  X,
+  Clock,
   MapPin,
+  RefreshCw,
 } from 'lucide-react';
 import type { PageId } from '../../context/NavigationContext';
 import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
-import { BackButton } from '../common/BackButton';
 import { orderService, type UserOrder } from '../../services/orderService';
 import { formatPrice } from '../../utils/formatters';
 
@@ -26,13 +21,11 @@ interface PaymentSuccessViewProps {
 }
 
 export const PaymentSuccessView: FC<PaymentSuccessViewProps> = ({ onNavigate }) => {
-  const { user } = useAuth();
   const { refreshCart } = useCart();
-  const [copied, setCopied] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
-  const [orderReference, setOrderReference] = useState<string>('');
   const [verifiedOrder, setVerifiedOrder] = useState<UserOrder | null>(null);
   const [isVerifying, setIsVerifying] = useState<boolean>(true);
+  const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
+  const [orderReference, setOrderReference] = useState<string>('');
 
   useEffect(() => {
     // Read Stripe session_id or order reference from URL query parameters
@@ -40,15 +33,13 @@ export const PaymentSuccessView: FC<PaymentSuccessViewProps> = ({ onNavigate }) 
     const sId = searchParams.get('session_id') || searchParams.get('sessionId') || '';
     const oId = searchParams.get('orderId') || searchParams.get('order_id') || '';
 
-    setSessionId(sId);
     if (oId) {
       setOrderReference(`#EH-${oId}-2026`);
     } else {
-      const hash = Math.floor(100000 + Math.random() * 900000);
-      setOrderReference(`#EH-${hash}-2026`);
+      setOrderReference('');
     }
 
-    // Synchronize client cart state after checkout
+    // Refresh client cart state after checkout
     refreshCart().catch(() => {});
 
     // Backend order verification: check authenticated user's orders
@@ -94,219 +85,293 @@ export const PaymentSuccessView: FC<PaymentSuccessViewProps> = ({ onNavigate }) 
     };
   }, [refreshCart]);
 
-  const handleCopyReference = () => {
-    const textToCopy = orderReference || sessionId;
-    if (textToCopy && navigator.clipboard) {
-      navigator.clipboard.writeText(textToCopy).catch(() => {});
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  // Payment correctness evaluation
+  const paymentStatus = (verifiedOrder?.paymentStatus || '').toLowerCase();
+  const isPaid = paymentStatus === 'paid';
+  const isPending = paymentStatus === 'pending';
 
-  const [currentDate] = useState(() =>
-    new Date().toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  );
-
-  const isPaid = verifiedOrder?.paymentStatus === 'paid';
+  // Format order date
+  const formattedDate = verifiedOrder?.createdAt
+    ? new Date(verifiedOrder.createdAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
 
   return (
-    <div className="bg-[#FBF6F0] min-h-[calc(100vh-140px)] py-8 lg:py-14 text-[#111111] font-['Plus_Jakarta_Sans']">
-      <div className="max-w-[800px] mx-auto px-4 sm:px-8 space-y-6 sm:space-y-8">
-        {/* Back Navigation */}
-        <div>
-          <BackButton label="Back to Products" onClick={() => onNavigate('products')} />
-        </div>
-
-        {/* Main Success Container Card */}
-        <div className="rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] p-6 sm:p-10 lg:p-12 text-center space-y-6 sm:space-y-8 shadow-xs">
-          {/* Success Icon: Checkmark inside a green circle */}
-          <div className="flex justify-center">
+    <div className="min-h-[calc(100vh-140px)] bg-[#FBF6F0] flex items-center justify-center p-4 sm:p-6 font-['Plus_Jakarta_Sans'] text-[#111111]">
+      {/* Centered Success Card */}
+      <div className="w-full max-w-md bg-[#EEE9E5] border border-[#E5D7CA] rounded-3xl p-6 sm:p-8 text-center space-y-5 shadow-xs">
+        {/* Compact Success Icon */}
+        <div className="flex justify-center">
+          {isVerifying ? (
             <div
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-emerald-600 shadow-sm animate-in zoom-in-75 duration-300"
+              className="w-14 h-14 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] flex items-center justify-center text-[#C49B82] shadow-2xs"
+              aria-label="Verifying Payment"
+            >
+              <RefreshCw className="w-6 h-6 animate-spin text-[#C49B82]" />
+            </div>
+          ) : isPending ? (
+            <div
+              className="w-14 h-14 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shadow-2xs"
+              aria-label="Payment Pending"
+            >
+              <Clock className="w-7 h-7" />
+            </div>
+          ) : (
+            <div
+              className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-400 flex items-center justify-center text-emerald-600 shadow-2xs"
               aria-label="Payment Successful"
             >
-              <CheckCircle2 className="w-12 h-12 sm:w-14 sm:h-14 stroke-[2.2]" />
+              <CheckCircle2 className="w-7 h-7 stroke-[2.4]" />
             </div>
+          )}
+        </div>
+
+        {/* Short Heading and Brief Confirmation Sentence */}
+        <div className="space-y-1.5">
+          <h1 className="text-2xl sm:text-[28px] font-bold text-[#111111] tracking-tight">
+            {isPending ? 'Payment Processing' : 'Payment Successful!'}
+          </h1>
+          <p className="text-xs sm:text-sm text-[#555555] leading-relaxed max-w-sm mx-auto">
+            {isPending
+              ? 'Your payment was submitted and is awaiting confirmation from our payment provider.'
+              : 'Your payment has been processed successfully. Thank you for your purchase.'}
+          </p>
+        </div>
+
+        {/* Order Reference Badge (when available) */}
+        {(orderReference || formattedDate) && (
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] text-[11px] font-mono font-semibold text-[#666666]">
+            {orderReference && <span>{orderReference}</span>}
+            {orderReference && formattedDate && <span>•</span>}
+            {formattedDate && <span className="font-sans">{formattedDate}</span>}
           </div>
+        )}
 
-          {/* Heading and Primary Confirmation Message */}
-          <div className="space-y-2 sm:space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF6F2] border border-emerald-200 text-emerald-700 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>
-                {isPaid
-                  ? 'Payment Verified & Confirmed'
-                  : isVerifying
-                  ? 'Verifying Order Status...'
-                  : 'Payment Session Received'}
-              </span>
-            </div>
+        {/* Action Buttons: View Receipt, Continue Shopping, My Orders */}
+        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsReceiptOpen(true)}
+            className="h-11 px-4 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
+          >
+            <Receipt className="w-4 h-4" />
+            <span>View Receipt</span>
+          </button>
 
-            <h1 className="text-[26px] sm:text-[34px] lg:text-[40px] font-bold text-[#111111] tracking-tight leading-tight">
-              Payment Successful!
-            </h1>
+          <button
+            type="button"
+            onClick={() => onNavigate('products')}
+            className="h-11 px-4 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#DFD4C8] text-[#111111] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
+          >
+            <ShoppingBag className="w-4 h-4 text-[#777777]" />
+            <span>Continue Shopping</span>
+          </button>
 
-            <p className="text-sm sm:text-base text-[#444444] max-w-lg mx-auto leading-relaxed">
-              Your payment has been processed successfully. Thank you for your purchase.
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('orders')}
+            className="h-11 px-3.5 rounded-xl bg-transparent hover:bg-[#FAF6F2] text-[#555555] hover:text-[#111111] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer"
+            title="My Orders"
+          >
+            <Package className="w-4 h-4" />
+            <span className="sm:hidden">My Orders</span>
+          </button>
+        </div>
+      </div>
 
-          {/* Order Confirmation Receipt Block */}
-          <div className="rounded-2xl bg-[#FAF6F2] border border-[#DFD4C8] p-5 sm:p-6 text-left space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#DFD4C8]/80 text-xs font-bold text-[#777777] uppercase tracking-wider">
-              <span>Order Confirmation</span>
-              <span className="flex items-center gap-1 text-[#555555]">
-                <Clock className="w-3.5 h-3.5" />
-                {currentDate}
-              </span>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#444444] leading-relaxed">
-              We have received your payment and our logistics team is preparing your hardware
-              shipment. A detailed confirmation receipt with warranty documentation has been
-              dispatched
-              {user?.email ? ` to ${user.email}` : ' to your account email address'}.
-            </p>
-
-            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="space-y-0.5">
-                <span className="text-[11px] font-bold text-[#888888] uppercase tracking-wide block">
-                  Confirmation Reference
-                </span>
-                <span className="font-mono font-bold text-sm text-[#111111] select-all">
-                  {orderReference}
-                </span>
+      {/* Compact Receipt / Order Details Modal */}
+      {isReceiptOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-lg bg-[#EEE9E5] border border-[#E5D7CA] rounded-3xl p-5 sm:p-7 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#DFD4C8]">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-[#C49B82]" />
+                <h3 className="text-base sm:text-lg font-bold text-[#111111] tracking-tight">
+                  Order Details & Receipt
+                </h3>
               </div>
-
               <button
                 type="button"
-                onClick={handleCopyReference}
-                className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#EEE9E5] hover:bg-[#E5D7CA] text-[#111111] font-semibold text-xs transition cursor-pointer border border-[#DFD4C8]"
+                onClick={() => setIsReceiptOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#FAF6F2] hover:bg-[#E5D7CA] border border-[#DFD4C8] text-[#555555] hover:text-[#111111] flex items-center justify-center transition cursor-pointer"
+                aria-label="Close receipt"
               >
-                {copied ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-[#C49B82]" />
-                    <span>Copy Reference</span>
-                  </>
-                )}
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Verified Backend Order Info */}
-            {verifiedOrder && (
-              <div className="mt-3 pt-3 border-t border-[#DFD4C8]/70 space-y-2 text-xs">
-                <div className="flex justify-between items-center text-[#555555]">
-                  <span>Order Status:</span>
-                  <span className="font-bold text-[#111111] uppercase tracking-wider">
-                    {verifiedOrder.status}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-[#555555]">
-                  <span>Payment Status:</span>
-                  <span className="font-bold text-emerald-700 uppercase tracking-wider">
-                    {verifiedOrder.paymentStatus}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-[#555555]">
-                  <span>Total Amount:</span>
-                  <span className="font-bold text-base font-mono text-[#111111]">
-                    {formatPrice(Number(verifiedOrder.totalPrice))}
-                  </span>
-                </div>
-                {verifiedOrder.shippingAddress && (
-                  <div className="flex justify-between items-start text-[#555555] pt-1">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-[#C49B82]" />
-                      Shipping:
+            {/* Modal Content */}
+            {verifiedOrder ? (
+              <div className="space-y-4 text-xs">
+                {/* Meta Summary */}
+                <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-[#FAF6F2] border border-[#DFD4C8]">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider block">
+                      Order Reference
                     </span>
-                    <span className="font-medium text-[#111111] text-right max-w-xs">
-                      {verifiedOrder.shippingAddress}, {verifiedOrder.city}
+                    <span className="font-mono font-bold text-sm text-[#111111]">
+                      {orderReference || `#EH-${verifiedOrder.id}-2026`}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider block">
+                      Order Date
+                    </span>
+                    <span className="font-semibold text-xs text-[#111111]">
+                      {formattedDate || 'Recent'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider block">
+                      Payment Status
+                    </span>
+                    <span
+                      className={`font-bold text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                        isPaid
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                      }`}
+                    >
+                      {verifiedOrder.paymentStatus || 'Processing'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider block">
+                      Order Status
+                    </span>
+                    <span className="font-bold text-[11px] uppercase tracking-wider text-[#111111] mt-0.5 block">
+                      {verifiedOrder.status || 'Pending'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Purchased Products List */}
+                <div className="space-y-2">
+                  <div className="font-bold text-[11px] text-[#777777] uppercase tracking-wider">
+                    Purchased Items (
+                    {verifiedOrder.orderItems?.length || 0})
+                  </div>
+
+                  {verifiedOrder.orderItems && verifiedOrder.orderItems.length > 0 ? (
+                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                      {verifiedOrder.orderItems.map((item) => {
+                        const price = Number(item.unitPrice || 0);
+                        const qty = item.quantity || 1;
+                        const itemTotal = price * qty;
+                        const imgSrc = item.product?.image || '/assets/sony-main.jpg';
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="p-2.5 rounded-xl bg-[#FAF6F2] border border-[#DFD4C8] flex items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-10 h-10 rounded-lg bg-[#EEE9E5] border border-[#DFD4C8] overflow-hidden shrink-0 flex items-center justify-center p-1">
+                                <img
+                                  src={imgSrc}
+                                  alt={item.productName}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = '/assets/sony-main.jpg';
+                                  }}
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-[#111111] truncate text-xs">
+                                  {item.productName}
+                                </div>
+                                <div className="text-[11px] text-[#666666]">
+                                  Qty: {qty} × {formatPrice(price)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="font-mono font-bold text-xs text-[#111111] shrink-0">
+                              {formatPrice(itemTotal)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-[#FAF6F2] text-[#666666] text-center text-xs">
+                      Item breakdown is being summarized by warehouse.
+                    </div>
+                  )}
+                </div>
+
+                {/* Shipping Destination if available */}
+                {verifiedOrder.shippingAddress && (
+                  <div className="p-3 rounded-xl bg-[#FAF6F2] border border-[#DFD4C8] flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-[#C49B82] shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-[11px] text-[#888888] uppercase tracking-wider">
+                        Delivery Destination
+                      </div>
+                      <div className="text-xs text-[#111111] font-medium mt-0.5">
+                        {verifiedOrder.shippingAddress}, {verifiedOrder.city},{' '}
+                        {verifiedOrder.country}
+                      </div>
+                    </div>
+                  </div>
                 )}
+
+                {/* Final Order Total */}
+                <div className="p-3.5 rounded-2xl bg-[#111111] text-[#FAF6F2] flex items-center justify-between">
+                  <span className="font-bold text-xs uppercase tracking-wider">
+                    Total Paid / Billed
+                  </span>
+                  <span className="font-mono font-bold text-base text-[#CCA893]">
+                    {formatPrice(Number(verifiedOrder.totalPrice || 0))}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* Graceful Fallback if backend details are unavailable */
+              <div className="p-6 text-center space-y-3 bg-[#FAF6F2] rounded-2xl border border-[#DFD4C8]">
+                <Package className="w-8 h-8 text-[#C49B82] mx-auto" />
+                <div className="space-y-1">
+                  <h4 className="font-bold text-sm text-[#111111]">
+                    Receipt Pending Confirmation
+                  </h4>
+                  <p className="text-xs text-[#666666] leading-relaxed max-w-sm mx-auto">
+                    Your order details are currently being finalized on the server. You can view
+                    your full verified order records in My Orders at any time.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsReceiptOpen(false);
+                    onNavigate('orders');
+                  }}
+                  className="px-5 py-2 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-xs uppercase tracking-wider transition cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <span>Go to My Orders</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 
-            {sessionId && (
-              <div className="pt-2 border-t border-[#DFD4C8]/60 text-[11px] text-[#777777] font-mono break-all">
-                <span className="font-sans font-semibold">Stripe Session: </span>
-                {sessionId}
-              </div>
-            )}
-          </div>
-
-          {/* Delivery & Warranty Guarantees */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
-            <div className="p-4 rounded-xl bg-[#FAF6F2]/80 border border-[#DFD4C8] flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#EEE9E5] text-[#C49B82] flex items-center justify-center shrink-0">
-                <Truck className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-[#111111] uppercase tracking-wide">
-                  Express Dispatch
-                </div>
-                <div className="text-[11px] text-[#666666] truncate">
-                  Prompt courier transit across Egypt
-                </div>
-              </div>
+            {/* Modal Footer Close */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsReceiptOpen(false)}
+                className="px-4 py-2 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#DFD4C8] text-xs font-semibold text-[#111111] transition cursor-pointer"
+              >
+                Close
+              </button>
             </div>
-
-            <div className="p-4 rounded-xl bg-[#FAF6F2]/80 border border-[#DFD4C8] flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#EEE9E5] text-[#C49B82] flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-[#111111] uppercase tracking-wide">
-                  Official Warranty
-                </div>
-                <div className="text-[11px] text-[#666666] truncate">
-                  100% genuine hardware coverage
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons: View in My Orders, Continue Shopping, Home */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <button
-              type="button"
-              onClick={() => onNavigate('orders')}
-              className="w-full sm:w-auto h-12 px-7 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase flex items-center justify-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
-            >
-              <Package className="w-4 h-4" />
-              <span>View in My Orders</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('products')}
-              className="w-full sm:w-auto h-12 px-6 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#DFD4C8] text-[#111111] font-semibold text-[13px] tracking-[0.06em] uppercase flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
-            >
-              <ShoppingBag className="w-4 h-4 text-[#777777]" />
-              <span>Continue Shopping</span>
-              <ArrowRight className="w-4 h-4 text-[#777777]" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('home')}
-              className="w-full sm:w-auto h-12 px-5 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#DFD4C8] text-[#111111] font-semibold text-[13px] tracking-[0.06em] uppercase flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
-            >
-              <Home className="w-4 h-4 text-[#777777]" />
-              <span>Home</span>
-            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -9,13 +9,13 @@ import {
   ShoppingCart,
   Heart,
   AlertCircle,
-  RefreshCw,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import type { ApiProduct } from '../../types/api';
 import { offersService, calculateDiscountPricing } from '../../services/offersService';
 import { useFavorites } from '../../context/FavoritesContext';
-import { useCart, type AddToCartOptions } from '../../context/CartContext';
+import type { AddToCartOptions } from '../../context/CartContext';
 import { formatPrice, formatRating } from '../../utils/formatters';
 
 interface OffersSectionProps {
@@ -30,7 +30,6 @@ export const OffersSection: FC<OffersSectionProps> = ({
   onNavigateToOffers,
 }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { isAddingProduct } = useCart();
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -314,51 +313,36 @@ export const OffersSection: FC<OffersSectionProps> = ({
                         )}
                       </div>
 
-                      {(() => {
-                        const isAdding = isAddingProduct(product.id);
-                        return (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              const cardEl = e.currentTarget.closest('[data-product-card]') as HTMLElement | null;
-                              const imgEl = (cardEl?.querySelector('img') as HTMLElement | null) || (e.currentTarget as HTMLElement);
-                              const rect = imgEl.getBoundingClientRect();
-                              onAddToCart(product, {
-                                sourceElement: imgEl,
-                                startRect: {
-                                  left: rect.left,
-                                  top: rect.top,
-                                  width: rect.width,
-                                  height: rect.height,
-                                },
-                                imageSrc: product.image || '/assets/sony-main.jpg',
-                              });
-                            }}
-                            disabled={product.stockQuantity <= 0}
-                            className={`h-10 px-3.5 sm:px-4 rounded-xl font-bold text-[11px] tracking-[0.08em] uppercase transition-all duration-200 active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer ${
-                              product.stockQuantity <= 0
-                                ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
-                                : isAdding
-                                ? 'bg-[#BFA088] text-[#1A1A1A]'
-                                : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
-                            }`}
-                            title={product.stockQuantity <= 0 ? 'Out of stock' : 'Add to cart'}
-                          >
-                            {isAdding ? (
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <ShoppingCart className="w-3.5 h-3.5" />
-                            )}
-                            <span>
-                              {product.stockQuantity <= 0
-                                ? 'SOLD'
-                                : isAdding
-                                ? 'ADDING...'
-                                : 'ADD'}
-                            </span>
-                          </button>
-                        );
-                      })()}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          const cardEl = e.currentTarget.closest('[data-product-card]') as HTMLElement | null;
+                          const imgEl = (cardEl?.querySelector('img') as HTMLElement | null) || (e.currentTarget as HTMLElement);
+                          const rect = imgEl.getBoundingClientRect();
+                          onAddToCart(product, {
+                            sourceElement: imgEl,
+                            startRect: {
+                              left: rect.left,
+                              top: rect.top,
+                              width: rect.width,
+                              height: rect.height,
+                            },
+                            imageSrc: product.image || '/assets/sony-main.jpg',
+                          });
+                        }}
+                        disabled={product.stockQuantity <= 0}
+                        className={`h-10 px-3.5 sm:px-4 rounded-xl font-bold text-[11px] tracking-[0.08em] uppercase transition-all duration-200 active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                          product.stockQuantity <= 0
+                            ? 'bg-[#DFD4C8] text-[#888888] cursor-not-allowed'
+                            : 'bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A]'
+                        }`}
+                        title={product.stockQuantity <= 0 ? 'Out of stock' : 'Add to cart'}
+                      >
+                        <ShoppingCart className="w-3.5 h-3.5" />
+                        <span>
+                          {product.stockQuantity <= 0 ? 'SOLD' : 'ADD'}
+                        </span>
+                      </button>
                     </div>
                   </div>
                 </div>

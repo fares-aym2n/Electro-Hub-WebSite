@@ -76,10 +76,14 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
       }
     } catch (err: any) {
       console.error('Failed to load user orders:', err);
-      setError(
-        err.message ||
-          'Unable to retrieve your order history. Please check your connection and try again.'
-      );
+      if (err?.statusCode === 401 || err?.statusCode === 403) {
+        setError('Your session has expired or you are not authorized to view orders. Please sign in again.');
+      } else {
+        setError(
+          err.message ||
+            'Unable to retrieve your order history. Please check your connection and try again.'
+        );
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -92,10 +96,12 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
     }
   }, [authLoading, fetchOrders]);
 
-  // Tab filtering
+  // Tab filtering: case-insensitive to safely handle both 'confirmed' and 'CONFIRMED'
   const filteredOrders = useMemo(() => {
     if (activeTab === 'all') return orders;
-    return orders.filter((o) => o.status === activeTab);
+    return orders.filter(
+      (o) => (o.status || '').toLowerCase() === activeTab.toLowerCase()
+    );
   }, [orders, activeTab]);
 
   const orderCounts = useMemo(() => {
@@ -108,8 +114,9 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
       cancelled: 0,
     };
     orders.forEach((o) => {
-      if (counts[o.status as FilterTab] !== undefined) {
-        counts[o.status as FilterTab]++;
+      const s = (o.status || '').toLowerCase() as FilterTab;
+      if (counts[s] !== undefined) {
+        counts[s]++;
       }
     });
     return counts;
@@ -363,13 +370,24 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                 {error}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => fetchOrders(true)}
-              className="px-6 py-2.5 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-xs uppercase tracking-wider transition cursor-pointer"
-            >
-              Try Again
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => fetchOrders(true)}
+                className="px-6 py-2.5 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+              >
+                Try Again
+              </button>
+              {(error.toLowerCase().includes('sign in') || error.toLowerCase().includes('session') || error.toLowerCase().includes('authorized')) && (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('signin')}
+                  className="px-6 py-2.5 rounded-xl bg-[#111111] hover:bg-[#333333] text-[#FAF6F2] font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
           </div>
         ) : orders.length === 0 ? (
           /* 6. Empty Orders State */

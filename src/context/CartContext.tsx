@@ -58,10 +58,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     quantity: number;
   } | null>(null);
   const [cartErrorNotice, setCartErrorNotice] = useState<string | null>(null);
-  const [addingProductIds, setAddingProductIds] = useState<Set<number>>(new Set());
-
-  // Serialized promise queues per product to handle rapid repeated clicks smoothly
-  const productQueuesRef = useRef<Map<number, Promise<boolean>>>(new Map());
+  // Bump & notice timers
   const bumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,8 +97,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const isAddingProduct = useCallback(
-    (productId: number): boolean => addingProductIds.has(productId),
-    [addingProductIds]
+    (_productId: number): boolean => false,
+    []
   );
 
   const syncCartState = useCallback((backendCart: ApiCart | null) => {
@@ -227,87 +224,71 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user, items, cart, openAuthModal, removeFromCart, syncCartState]
   );
 
-  // 2. Add item to cart: POST /api/carts/:productId (allows multiple clicks & increments quantity)
+  const inFlightProductIdsRef = useRef<Set<number>>(new Set());
+
+  // 2. Add item to cart: POST /api/carts/:productId
   const addToCart = useCallback(
-    (
+    async (
       product: ApiProduct,
       quantity: number = 1,
       options?: AddToCartOptions
     ): Promise<boolean> => {
       if (!user) {
         openAuthModal('signin');
-        return Promise.resolve(false);
+        return false;
       }
+
+      // Prevent duplicate requests from repeated rapid clicks for the same product
+      if (inFlightProductIdsRef.current.has(product.id)) {
+        return false;
+      }
+      inFlightProductIdsRef.current.add(product.id);
 
       setError(null);
 
-      // Track in-flight state for this product
-      setAddingProductIds((prev) => new Set(prev).add(product.id));
+      try {
+        const updatedCart = await cartService.addItem(product.id, quantity);
 
-      // Optimistic increment
-      setItems((prev) => {
-        const existingIndex = prev.findIndex((item) => item.product.id === product.id);
-        if (existingIndex > -1) {
-          const next = [...prev];
-          next[existingIndex] = {
-            ...next[existingIndex],
-            quantity: next[existingIndex].quantity + quantity,
-          };
-          return next;
-        }
-        return [...prev, { product, quantity }];
-      });
-
-      // Chain onto queue for this product to prevent conflicting in-flight requests
-      const currentQueue = productQueuesRef.current.get(product.id) || Promise.resolve(true);
-
-      const nextPromise = currentQueue
-        .catch(() => true)
-        .then(async () => {
-          try {
-            const updatedCart = await cartService.addItem(product.id, quantity);
+        // Update badge and trigger bump ONLY after backend confirmation, synchronized with arrival
+        let stateSynced = false;
+        const commitCartUpdate = () => {
+          if (!stateSynced) {
+            stateSynced = true;
             syncCartState(updatedCart);
-
-            // Trigger flying-product animation directly into header shopping cart
-            flyProductToCart({
-              imageSrc: options?.imageSrc || product.image,
-              sourceElement: options?.sourceElement,
-              startRect: options?.startRect,
-              onArrive: () => {
-                // Header cart bump animation and badge pop when product enters cart
-                setCartBump(true);
-                if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
-                bumpTimerRef.current = setTimeout(() => {
-                  setCartBump(false);
-                }, 750);
-              },
-            });
-
-            return true;
-          } catch (err: any) {
-            console.error(`Failed to add product ${product.id} to cart:`, err);
-            // Revert state on error
-            await refreshCart();
-            const message = err.message || 'Failed to add item to cart.';
-            setError(message);
-            triggerCartErrorFeedback(message);
-            if (err?.statusCode === 401) {
-              openAuthModal('signin');
-            }
-            return false;
-          } finally {
-            setAddingProductIds((prev) => {
-              const next = new Set(prev);
-              next.delete(product.id);
-              return next;
-            });
+            setCartBump(true);
+            if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
+            bumpTimerRef.current = setTimeout(() => {
+              setCartBump(false);
+            }, 750);
           }
+        };
+
+        // Trigger flying-product animation directly into header shopping cart
+        flyProductToCart({
+          imageSrc: options?.imageSrc || product.image,
+          sourceElement: options?.sourceElement,
+          startRect: options?.startRect,
+          onArrive: commitCartUpdate,
         });
 
-      productQueuesRef.current.set(product.id, nextPromise);
-      return nextPromise;
+        // Safety fallback: ensure badge updates within 900ms even if animation was interrupted
+        setTimeout(commitCartUpdate, 900);
+
+        return true;
+      } catch (err: any) {
+        console.error(`Failed to add product ${product.id} to cart:`, err);
+        const message = err.message || 'Failed to add item to cart.';
+        setError(message);
+        triggerCartErrorFeedback(message);
+        if (err?.statusCode === 401) {
+          openAuthModal('signin');
+        }
+        return false;
+      } finally {
+        inFlightProductIdsRef.current.delete(product.id);
+      }
     },
-    [user, openAuthModal, syncCartState, triggerCartErrorFeedback, refreshCart]
+    [user, openAuthModal, syncCartState, triggerCartErrorFeedback]
   );
 
   // 5. Clear cart: DELETE /api/carts (204 No Content)
