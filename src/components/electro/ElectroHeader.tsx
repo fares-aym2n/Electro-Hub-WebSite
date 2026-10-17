@@ -291,8 +291,8 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               />
               {cartCount > 0 && (
                 <span
-                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-transform duration-200 ${
-                    cartBump ? "scale-115 bg-[#C49B82]" : ""
+                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-colors duration-200 ${
+                    cartBump ? "animate-badge-pop bg-[#C49B82] ring-2 ring-[#FAF6F2]" : ""
                   }`}
                 >
                   {cartCount}
@@ -342,8 +342,8 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               />
               {cartCount > 0 && (
                 <span
-                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-transform duration-200 ${
-                    cartBump ? "scale-115 bg-[#C49B82]" : ""
+                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-colors duration-200 ${
+                    cartBump ? "animate-badge-pop bg-[#C49B82] ring-2 ring-[#FAF6F2]" : ""
                   }`}
                 >
                   {cartCount}

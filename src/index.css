@@ -30,22 +30,41 @@
   background: #B38971;
 }
 
-/* Subtle, fast cart bounce effect (260ms) */
-@keyframes cartSubtleBounce {
+/* Juicy, modern cart bounce & badge pop effect */
+@keyframes cartJuicyBounce {
   0% {
-    transform: scale(1) translateY(0);
+    transform: scale(1) rotate(0deg);
   }
-  40% {
-    transform: scale(1.15) translateY(-2px);
+  30% {
+    transform: scale(1.28) rotate(-9deg) translateY(-2px);
   }
-  75% {
-    transform: scale(0.96) translateY(0.5px);
+  60% {
+    transform: scale(0.92) rotate(4deg) translateY(1px);
+  }
+  80% {
+    transform: scale(1.06) rotate(-2deg);
   }
   100% {
-    transform: scale(1) translateY(0);
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes badgePop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
 .animate-cart-bounce {
-  animation: cartSubtleBounce 260ms cubic-bezier(0.2, 0.8, 0.25, 1);
+  animation: cartJuicyBounce 420ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-badge-pop {
+  animation: badgePop 360ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
