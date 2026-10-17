@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import type { AddToCartOptions } from '../../context/CartContext';
 import { formatPrice, formatRating, formatDate } from '../../utils/formatters';
 import { BackButton } from '../common/BackButton';
+import { StarRatingDisplay } from '../common/StarRating';
 import { EditReviewModal } from '../reviews/EditReviewModal';
 import { DeleteReviewModal } from '../reviews/DeleteReviewModal';
 
@@ -129,7 +130,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
 
     const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     reviews.forEach((r) => {
-      const star = Math.min(5, Math.max(1, Math.round(r.rating)));
+      const star = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5)));
       counts[star] = (counts[star] || 0) + 1;
     });
 
@@ -721,21 +722,10 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
                     </div>
 
                     {/* Star Rating */}
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex text-[#C49B82]">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-3.5 h-3.5 ${
-                              i < Math.round(rev.rating)
-                                ? 'fill-[#C49B82] text-[#C49B82]'
-                                : 'text-[#DFD4C8]'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[12px] font-semibold text-[#111111]">
-                        {rev.rating}.0
+                    <div className="flex items-center gap-2">
+                      <StarRatingDisplay rating={rev.rating} size="sm" />
+                      <span className="text-[12px] font-semibold text-[#111111] font-mono">
+                        {formatRating(rev.rating)}
                       </span>
                     </div>
 

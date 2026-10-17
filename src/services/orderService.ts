@@ -77,21 +77,21 @@ export const orderService = {
   /**
    * Create an order from the user's cart and dispatch
    * Stripe checkout session or cash on delivery.
-   * POST /api/order/checkout
+   * POST /api/orders/checkout
    */
   async checkout(dto: CreateOrderDto): Promise<CreateOrderResponse> {
-    return apiClient.post<CreateOrderResponse>("/api/order/checkout", dto, {
+    return apiClient.post<CreateOrderResponse>("/api/orders/checkout", dto, {
       requiresAuth: true,
     });
   },
 
   /**
    * Retrieve all orders belonging to the authenticated user.
-   * GET /api/order/my-orders
+   * GET /api/orders/my-orders
    */
   async getMyOrders(): Promise<UserOrder[]> {
     const res = await apiClient.get<GetMyOrdersResponse | UserOrder[]>(
-      "/api/order/my-orders",
+      "/api/orders/my-orders",
       {
         requiresAuth: true,
       },
@@ -123,5 +123,42 @@ export const orderService = {
     }
 
     throw new Error("Unexpected Get My Orders API response format");
+  },
+
+  /**
+   * Retrieve single order details by order ID.
+   * GET /api/orders/:orderId
+   */
+  async getOrderById(orderId: number | string): Promise<UserOrder> {
+    const numericId =
+      typeof orderId === "string" ? parseInt(orderId, 10) : orderId;
+    if (!numericId || isNaN(numericId) || numericId <= 0) {
+      throw new Error(`Invalid order ID: ${orderId}`);
+    }
+
+    const res = await apiClient.get<
+      UserOrder | { order: UserOrder } | { data: UserOrder }
+    >(`/api/orders/${numericId}`, {
+      requiresAuth: true,
+    });
+
+    if (res && typeof res === "object") {
+      if ("order" in res && (res as any).order) {
+        return (res as any).order;
+      }
+      if ("data" in res && (res as any).data) {
+        return (res as any).data;
+      }
+      return res as UserOrder;
+    }
+
+    throw new Error("Unexpected Order Details API response format");
+  },
+
+  /**
+   * Alias for getOrderById for flexible usage.
+   */
+  async getOrderDetails(orderId: number | string): Promise<UserOrder> {
+    return this.getOrderById(orderId);
   },
 };

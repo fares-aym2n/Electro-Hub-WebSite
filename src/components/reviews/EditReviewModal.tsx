@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Star, X, Loader2, AlertCircle } from 'lucide-react';
+import { X, Loader2, AlertCircle } from 'lucide-react';
 import type { ApiReview } from '../../types/api';
 import { reviewService } from '../../services/reviewService';
+import { StarRatingSelector } from '../common/StarRating';
 
 interface EditReviewModalProps {
   isOpen: boolean;
@@ -17,7 +18,6 @@ export const EditReviewModal: React.FC<EditReviewModalProps> = ({
   onSaveSuccess,
 }) => {
   const [rating, setRating] = useState<number>(5);
-  const [hoverRating, setHoverRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -26,8 +26,8 @@ export const EditReviewModal: React.FC<EditReviewModalProps> = ({
   // Prepopulate form whenever target review changes or modal opens
   useEffect(() => {
     if (review && isOpen) {
-      setRating(Math.min(5, Math.max(1, Math.round(review.rating || 5))));
-      setHoverRating(0);
+      const parsed = Number(review.rating);
+      setRating(isNaN(parsed) ? 5 : Math.min(5, Math.max(1, parsed)));
       setReviewText(review.review || '');
       setValidationError(null);
       setApiError(null);
@@ -142,31 +142,11 @@ export const EditReviewModal: React.FC<EditReviewModalProps> = ({
             <label className="block text-[12px] font-bold text-[#111111] uppercase tracking-[0.06em] mb-2">
               Rating
             </label>
-            <div className="flex items-center gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  type="button"
-                  key={star}
-                  disabled={isSubmitting}
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 focus:outline-none transition group disabled:cursor-not-allowed"
-                  aria-label={`Rate ${star} of 5 stars`}
-                >
-                  <Star
-                    className={`w-7 h-7 transition ${
-                      star <= (hoverRating || rating)
-                        ? 'fill-[#C49B82] text-[#C49B82]'
-                        : 'text-[#DFD4C8] hover:text-[#CCA893]'
-                    }`}
-                  />
-                </button>
-              ))}
-              <span className="text-xs sm:text-sm font-semibold text-[#111111] ml-2">
-                {hoverRating || rating} of 5 Stars
-              </span>
-            </div>
+            <StarRatingSelector
+              value={rating}
+              onChange={(val) => setRating(val)}
+              disabled={isSubmitting}
+            />
           </div>
 
           {/* Review Text */}

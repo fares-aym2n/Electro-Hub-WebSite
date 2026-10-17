@@ -47,27 +47,42 @@ export const PaymentSuccessView: FC<PaymentSuccessViewProps> = ({ onNavigate }) 
     async function verifyFromBackend() {
       setIsVerifying(true);
       try {
-        const userOrders = await orderService.getMyOrders();
-        if (isCancelled || !Array.isArray(userOrders) || userOrders.length === 0) {
-          setIsVerifying(false);
-          return;
-        }
-
-        // Match order by orderId or stripeSessionId, or take the most recent order
         let matched: UserOrder | undefined;
+
+        // 1. If explicit orderId is present in URL, try fetching direct order details
         if (oId) {
           const numId = parseInt(oId, 10);
-          matched = userOrders.find((o) => o.id === numId);
-        }
-        if (!matched && sId) {
-          matched = userOrders.find((o) => o.stripeSessionId === sId);
-        }
-        if (!matched) {
-          // Most recent order
-          matched = userOrders[0];
+          if (!isNaN(numId) && numId > 0) {
+            try {
+              const directOrder = await orderService.getOrderById(numId);
+              if (directOrder && directOrder.id) {
+                matched = directOrder;
+              }
+            } catch {
+              // Ignore if non-admin or not found, fall through to user's order list
+            }
+          }
         }
 
-        if (matched) {
+        // 2. Fall back to authenticated user's full order list
+        if (!matched) {
+          const userOrders = await orderService.getMyOrders();
+          if (Array.isArray(userOrders) && userOrders.length > 0) {
+            if (oId) {
+              const numId = parseInt(oId, 10);
+              matched = userOrders.find((o) => o.id === numId);
+            }
+            if (!matched && sId) {
+              matched = userOrders.find((o) => o.stripeSessionId === sId);
+            }
+            if (!matched) {
+              // Most recent order
+              matched = userOrders[0];
+            }
+          }
+        }
+
+        if (!isCancelled && matched) {
           setVerifiedOrder(matched);
           setOrderReference(`#EH-${matched.id}-2026`);
         }

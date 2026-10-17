@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, AlertTriangle, X, Loader2, Star, AlertCircle } from 'lucide-react';
+import { Trash2, AlertTriangle, X, Loader2, AlertCircle } from 'lucide-react';
 import type { ApiReview } from '../../types/api';
 import { reviewService } from '../../services/reviewService';
+import { StarRatingDisplay } from '../common/StarRating';
 
 interface DeleteReviewModalProps {
   isOpen: boolean;
@@ -99,19 +100,10 @@ export const DeleteReviewModal: React.FC<DeleteReviewModalProps> = ({
 
         {/* Review Snippet Card */}
         <div className="p-4 rounded-2xl bg-[#EEE9E5] border border-[#DFD4C8] space-y-2">
-          <div className="flex items-center gap-1.5 text-[#C49B82]">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`w-3.5 h-3.5 ${
-                  i < Math.round(review.rating || 0)
-                    ? 'fill-[#C49B82] text-[#C49B82]'
-                    : 'text-[#DFD4C8]'
-                }`}
-              />
-            ))}
-            <span className="text-xs font-semibold text-[#111111] ml-1">
-              {review.rating} / 5
+          <div className="flex items-center gap-1.5">
+            <StarRatingDisplay rating={review.rating} size="sm" />
+            <span className="text-xs font-semibold text-[#111111] ml-1 font-mono">
+              {Number(review.rating).toFixed(1)} / 5
             </span>
           </div>
           <p className="text-xs sm:text-sm text-[#333333] italic line-clamp-3 leading-relaxed">

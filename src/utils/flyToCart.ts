@@ -6,9 +6,9 @@ export interface FlyToCartOptions {
 }
 
 /**
- * Lightweight, ultra-fast Add to Cart flight animation (~240ms).
- * Smoothly projects a compact thumbnail toward the header cart icon
- * with a quick shrink and opacity fade, followed by a subtle cart bounce.
+ * Slick, noticeable, and snappy Add to Cart flying animation (~460ms).
+ * Features an initial playful pop, an elegant parabolic arc towards the cart,
+ * a smooth shrink into the basket, and a juicy cart bounce upon arrival.
  */
 export function flyProductToCart({
   imageSrc,
@@ -48,10 +48,10 @@ export function flyProductToCart({
   }
 
   // 3. Determine start coordinates and dimensions
-  let sLeft = window.innerWidth / 2 - 25;
-  let sTop = window.innerHeight / 2 - 25;
-  let sWidth = 50;
-  let sHeight = 50;
+  let sLeft = window.innerWidth / 2 - 34;
+  let sTop = window.innerHeight / 2 - 34;
+  let sWidth = 68;
+  let sHeight = 68;
 
   if (sourceElement && sourceElement.isConnected) {
     const sRect = sourceElement.getBoundingClientRect();
@@ -73,26 +73,27 @@ export function flyProductToCart({
   const deltaX = targetCenterX - startCenterX;
   const deltaY = targetCenterY - startCenterY;
 
-  // 4. Create floating animated product clone element (compact 50x50)
+  // 4. Create floating animated product clone element (noticeable 68x68 thumbnail)
   const clone = document.createElement('div');
   clone.className = 'electro-flying-product';
   clone.style.position = 'fixed';
-  clone.style.left = `${startCenterX - 25}px`;
-  clone.style.top = `${startCenterY - 25}px`;
-  clone.style.width = '50px';
-  clone.style.height = '50px';
+  clone.style.left = `${startCenterX - 34}px`;
+  clone.style.top = `${startCenterY - 34}px`;
+  clone.style.width = '68px';
+  clone.style.height = '68px';
   clone.style.zIndex = '99999';
   clone.style.pointerEvents = 'none';
   clone.style.userSelect = 'none';
-  clone.style.borderRadius = '12px';
+  clone.style.borderRadius = '16px';
   clone.style.overflow = 'hidden';
-  clone.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.18)';
-  clone.style.border = '1.5px solid #CCA893';
+  clone.style.boxShadow =
+    '0 14px 30px -4px rgba(196, 155, 130, 0.45), 0 6px 14px rgba(0, 0, 0, 0.12)';
+  clone.style.border = '2px solid #C49B82';
   clone.style.backgroundColor = '#FAF6F2';
   clone.style.display = 'flex';
   clone.style.alignItems = 'center';
   clone.style.justifyContent = 'center';
-  clone.style.padding = '4px';
+  clone.style.padding = '5px';
   clone.style.willChange = 'transform, opacity';
 
   const img = document.createElement('img');
@@ -107,30 +108,45 @@ export function flyProductToCart({
 
   document.body.appendChild(clone);
 
-  // 5. Generate lightweight, responsive 3-point keyframes (approx 240ms duration)
-  const midX = deltaX * 0.52;
-  // Natural subtle upward toss (20px to 45px depending on horizontal travel)
-  const arcLift = Math.min(45, Math.max(18, Math.abs(deltaX) * 0.08));
+  // 5. Generate slick 5-point trajectory with initial pop and curved arc (~460ms)
+  const midX = deltaX * 0.54;
+  // Upward arc height for natural physics
+  const arcLift = Math.min(80, Math.max(35, Math.abs(deltaX) * 0.12 + 20));
   const midY = deltaY * 0.5 - arcLift;
-  const tilt = (deltaX >= 0 ? 15 : -15);
+  const tilt = deltaX >= 0 ? 16 : -16;
 
   const keyframes: Keyframe[] = [
+    // 0%: Origin
     {
-      transform: 'translate3d(0, 0, 0) scale(1) rotate(0deg)',
-      opacity: 1,
+      transform: 'translate3d(0, 0, 0) scale(0.92) rotate(0deg)',
+      opacity: 0.9,
     },
+    // 15%: Playful initial pop & lift to catch the user's attention immediately
     {
-      transform: `translate3d(${midX}px, ${midY}px, 0) scale(0.65) rotate(${tilt}deg)`,
-      opacity: 0.92,
+      transform: `translate3d(${deltaX * 0.08}px, ${-arcLift * 0.35}px, 0) scale(1.1) rotate(${tilt * 0.3}deg)`,
+      opacity: 1,
+      offset: 0.15,
+    },
+    // 55%: Gliding along graceful upward arc
+    {
+      transform: `translate3d(${midX}px, ${midY}px, 0) scale(0.82) rotate(${tilt}deg)`,
+      opacity: 0.98,
       offset: 0.55,
     },
+    // 85%: Accelerating toward the cart basket
     {
-      transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(0.12) rotate(${tilt * 1.5}deg)`,
+      transform: `translate3d(${deltaX * 0.88}px, ${deltaY * 0.88 - arcLift * 0.15}px, 0) scale(0.38) rotate(${tilt * 1.3}deg)`,
+      opacity: 0.85,
+      offset: 0.85,
+    },
+    // 100%: Sinks right into the cart icon
+    {
+      transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(0.08) rotate(${tilt * 1.6}deg)`,
       opacity: 0,
     },
   ];
 
-  const duration = 240; // 240 milliseconds - fast, crisp, snappy
+  const duration = 460; // 460ms: sweet spot between fast and satisfyingly noticeable
 
   let isCleanedUp = false;
   const cleanup = () => {
@@ -145,7 +161,7 @@ export function flyProductToCart({
   try {
     const anim = clone.animate(keyframes, {
       duration,
-      easing: 'cubic-bezier(0.2, 0.8, 0.25, 1)',
+      easing: 'cubic-bezier(0.2, 0.85, 0.3, 1)',
       fill: 'forwards',
     });
 
@@ -155,6 +171,6 @@ export function flyProductToCart({
     cleanup();
   }
 
-  // Safety failsafe: always remove DOM element within 300ms
-  setTimeout(cleanup, duration + 60);
+  // Safety failsafe: always remove DOM element within 550ms
+  setTimeout(cleanup, duration + 90);
 }

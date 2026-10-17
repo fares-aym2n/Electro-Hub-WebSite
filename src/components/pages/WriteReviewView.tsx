@@ -8,6 +8,7 @@ import { reviewService } from '../../services/reviewService';
 import { useAuth } from '../../context/AuthContext';
 import { formatPrice, formatRating } from '../../utils/formatters';
 import { BackButton } from '../common/BackButton';
+import { StarRatingSelector } from '../common/StarRating';
 
 interface WriteReviewViewProps {
   productId?: number;
@@ -21,7 +22,6 @@ export const WriteReviewView: FC<WriteReviewViewProps> = ({
   const { user, openAuthModal } = useAuth();
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [rating, setRating] = useState<number>(5);
-  const [hoverRating, setHoverRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
@@ -186,32 +186,14 @@ export const WriteReviewView: FC<WriteReviewViewProps> = ({
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Overall Rating Stars */}
                 <div>
-                  <label className="block text-[13px] font-bold text-[#111111] uppercase tracking-[0.06em] mb-3">
+                  <label className="block text-[13px] font-bold text-[#111111] uppercase tracking-[0.06em] mb-2.5">
                     OVERALL RATING
                   </label>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        type="button"
-                        key={star}
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 focus:outline-none transition group"
-                      >
-                        <Star
-                          className={`w-8 h-8 transition ${
-                            star <= (hoverRating || rating)
-                              ? 'fill-[#C49B82] text-[#C49B82]'
-                              : 'text-[#DFD4C8] hover:text-[#CCA893]'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                    <span className="text-sm font-semibold text-[#111111] ml-2">
-                      {hoverRating || rating} of 5 Stars
-                    </span>
-                  </div>
+                  <StarRatingSelector
+                    value={rating}
+                    onChange={(val) => setRating(val)}
+                    disabled={submitting}
+                  />
                 </div>
 
                 {/* Review Text Area */}

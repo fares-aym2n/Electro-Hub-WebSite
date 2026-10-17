@@ -246,26 +246,44 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setError(null);
 
-      // 1. Immediately trigger the fast visual animation (~240ms) on click
+      let hasArrived = false;
+      let pendingCart: ApiCart | null = null;
+
+      const commitBadgeIfReady = () => {
+        if (hasArrived && pendingCart) {
+          syncCartState(pendingCart);
+        }
+      };
+
+      // 1. Immediately trigger the visual animation (~460ms) on click
       flyProductToCart({
         imageSrc: options?.imageSrc || product.image,
         sourceElement: options?.sourceElement,
         startRect: options?.startRect,
         onArrive: () => {
-          // Subtle, fast cart bounce when product enters the header cart
+          hasArrived = true;
+          // Juicy, noticeable cart bounce & badge pop
           setCartBump(true);
           if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
           bumpTimerRef.current = setTimeout(() => {
             setCartBump(false);
-          }, 280);
+          }, 440);
+          commitBadgeIfReady();
         },
       });
 
       // 2. Run backend API request normally in parallel
       try {
         const updatedCart = await cartService.addItem(product.id, quantity);
-        // 3. Update cart badge only after backend API succeeds
-        syncCartState(updatedCart);
+        pendingCart = updatedCart;
+        if (hasArrived) {
+          syncCartState(updatedCart);
+        } else {
+          // Failsafe in case animation was interrupted
+          setTimeout(() => {
+            syncCartState(updatedCart);
+          }, 520);
+        }
         return true;
       } catch (err: any) {
         console.error(`Failed to add product ${product.id} to cart:`, err);
