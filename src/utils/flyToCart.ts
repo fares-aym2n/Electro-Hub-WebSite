@@ -6,8 +6,9 @@ export interface FlyToCartOptions {
 }
 
 /**
- * Triggers a professional flying-product animation that captures the product thumbnail
- * and animates it along a parabolic curved trajectory directly into the header shopping cart icon.
+ * Lightweight, ultra-fast Add to Cart flight animation (~240ms).
+ * Smoothly projects a compact thumbnail toward the header cart icon
+ * with a quick shrink and opacity fade, followed by a subtle cart bounce.
  */
 export function flyProductToCart({
   imageSrc,
@@ -35,70 +36,70 @@ export function flyProductToCart({
     document.querySelector<HTMLElement>('[data-header-cart-target="mobile"]') ||
     document.querySelector<HTMLElement>('[data-header-cart-icon="true"]');
 
-  let targetX = window.innerWidth - 60;
-  let targetY = 35;
+  let targetCenterX = window.innerWidth - 44;
+  let targetCenterY = 32;
 
   if (targetElement) {
     const tRect = targetElement.getBoundingClientRect();
     if (tRect.width > 0 && tRect.height > 0) {
-      targetX = tRect.left + tRect.width / 2;
-      targetY = tRect.top + tRect.height / 2;
+      targetCenterX = tRect.left + tRect.width / 2;
+      targetCenterY = tRect.top + tRect.height / 2;
     }
   }
 
   // 3. Determine start coordinates and dimensions
-  let sLeft = window.innerWidth / 2 - 45;
-  let sTop = window.innerHeight / 2 - 45;
-  let sWidth = 90;
-  let sHeight = 90;
+  let sLeft = window.innerWidth / 2 - 25;
+  let sTop = window.innerHeight / 2 - 25;
+  let sWidth = 50;
+  let sHeight = 50;
 
   if (sourceElement && sourceElement.isConnected) {
     const sRect = sourceElement.getBoundingClientRect();
     if (sRect.width > 0 && sRect.height > 0) {
       sLeft = sRect.left;
       sTop = sRect.top;
-      sWidth = Math.min(130, Math.max(60, sRect.width));
-      sHeight = Math.min(130, Math.max(60, sRect.height));
+      sWidth = sRect.width;
+      sHeight = sRect.height;
     }
-  } else if (startRect) {
+  } else if (startRect && startRect.width > 0 && startRect.height > 0) {
     sLeft = startRect.left;
     sTop = startRect.top;
-    sWidth = Math.min(130, Math.max(60, startRect.width));
-    sHeight = Math.min(130, Math.max(60, startRect.height));
+    sWidth = startRect.width;
+    sHeight = startRect.height;
   }
 
   const startCenterX = sLeft + sWidth / 2;
   const startCenterY = sTop + sHeight / 2;
-  const deltaX = targetX - startCenterX;
-  const deltaY = targetY - startCenterY;
+  const deltaX = targetCenterX - startCenterX;
+  const deltaY = targetCenterY - startCenterY;
 
-  // 4. Create floating animated product clone element
+  // 4. Create floating animated product clone element (compact 50x50)
   const clone = document.createElement('div');
   clone.className = 'electro-flying-product';
   clone.style.position = 'fixed';
-  clone.style.left = `${sLeft}px`;
-  clone.style.top = `${sTop}px`;
-  clone.style.width = `${sWidth}px`;
-  clone.style.height = `${sHeight}px`;
+  clone.style.left = `${startCenterX - 25}px`;
+  clone.style.top = `${startCenterY - 25}px`;
+  clone.style.width = '50px';
+  clone.style.height = '50px';
   clone.style.zIndex = '99999';
   clone.style.pointerEvents = 'none';
   clone.style.userSelect = 'none';
-  clone.style.borderRadius = '18px';
+  clone.style.borderRadius = '12px';
   clone.style.overflow = 'hidden';
-  clone.style.boxShadow = '0 16px 36px rgba(0, 0, 0, 0.22), 0 4px 14px rgba(196, 155, 130, 0.35)';
-  clone.style.border = '2px solid rgba(196, 155, 130, 0.8)';
+  clone.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.18)';
+  clone.style.border = '1.5px solid #CCA893';
   clone.style.backgroundColor = '#FAF6F2';
   clone.style.display = 'flex';
   clone.style.alignItems = 'center';
   clone.style.justifyContent = 'center';
-  clone.style.padding = '6px';
+  clone.style.padding = '4px';
   clone.style.willChange = 'transform, opacity';
 
   const img = document.createElement('img');
   img.src =
     imageSrc ||
     'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80';
-  img.alt = 'Flying product item';
+  img.alt = '';
   img.style.width = '100%';
   img.style.height = '100%';
   img.style.objectFit = 'contain';
@@ -106,54 +107,54 @@ export function flyProductToCart({
 
   document.body.appendChild(clone);
 
-  // 5. Generate smooth parabolic flight trajectory
-  const steps = 30;
-  const keyframes: Keyframe[] = [];
-  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-  // Parabolic peak height: creates a natural upward toss arc before dropping into cart
-  const arcHeight = Math.min(180, Math.max(70, distance * 0.16 + 40));
+  // 5. Generate lightweight, responsive 3-point keyframes (approx 240ms duration)
+  const midX = deltaX * 0.52;
+  // Natural subtle upward toss (20px to 45px depending on horizontal travel)
+  const arcLift = Math.min(45, Math.max(18, Math.abs(deltaX) * 0.08));
+  const midY = deltaY * 0.5 - arcLift;
+  const tilt = (deltaX >= 0 ? 15 : -15);
 
-  for (let i = 0; i <= steps; i++) {
-    const p = i / steps; // progress 0 -> 1
-    // Smoothstep easing curve
-    const easeP = p * p * (3 - 2 * p);
-    const curX = deltaX * easeP;
-    // Parabolic arc peaks around midway
-    const arc = 4 * arcHeight * p * (1 - p);
-    const curY = deltaY * easeP - arc;
-    // Smooth shrinking down to 0.12 near cart entrance
-    const scale = Math.max(0.1, 1 - 0.88 * Math.pow(p, 1.25));
-    // Fade out as the item physically drops into the cart basket
-    const opacity = p > 0.85 ? Math.max(0, (1 - p) / 0.15) : 1;
-    // Dynamic tilt in direction of travel
-    const rotation = (deltaX >= 0 ? 30 : -30) * Math.sin(p * Math.PI);
+  const keyframes: Keyframe[] = [
+    {
+      transform: 'translate3d(0, 0, 0) scale(1) rotate(0deg)',
+      opacity: 1,
+    },
+    {
+      transform: `translate3d(${midX}px, ${midY}px, 0) scale(0.65) rotate(${tilt}deg)`,
+      opacity: 0.92,
+      offset: 0.55,
+    },
+    {
+      transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(0.12) rotate(${tilt * 1.5}deg)`,
+      opacity: 0,
+    },
+  ];
 
-    keyframes.push({
-      transform: `translate3d(${curX}px, ${curY}px, 0) scale(${scale}) rotate(${rotation}deg)`,
-      opacity,
-    });
-  }
+  const duration = 240; // 240 milliseconds - fast, crisp, snappy
 
-  // 6. Execute hardware-accelerated Web Animation
-  const animationDuration = Math.min(850, Math.max(650, distance * 0.65));
+  let isCleanedUp = false;
+  const cleanup = () => {
+    if (isCleanedUp) return;
+    isCleanedUp = true;
+    if (clone.parentNode) {
+      clone.parentNode.removeChild(clone);
+    }
+    onArrive?.();
+  };
 
   try {
     const anim = clone.animate(keyframes, {
-      duration: animationDuration,
-      easing: 'linear',
+      duration,
+      easing: 'cubic-bezier(0.2, 0.8, 0.25, 1)',
       fill: 'forwards',
     });
 
-    anim.onfinish = () => {
-      clone.remove();
-      onArrive?.();
-    };
-
-    anim.oncancel = () => {
-      clone.remove();
-    };
+    anim.onfinish = cleanup;
+    anim.oncancel = cleanup;
   } catch {
-    clone.remove();
-    onArrive?.();
+    cleanup();
   }
+
+  // Safety failsafe: always remove DOM element within 300ms
+  setTimeout(cleanup, duration + 60);
 }

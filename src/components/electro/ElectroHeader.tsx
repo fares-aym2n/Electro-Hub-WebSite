@@ -280,21 +280,19 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               onClick={() => navigate("checkout")}
               data-header-cart-target="desktop"
               data-header-cart-icon="true"
-              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition-all duration-300 flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
+              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition-colors duration-200 flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
                 activePage === "checkout" ? "text-[#C49B82]" : ""
-              } ${cartBump ? "scale-115 text-[#C49B82] -rotate-6" : ""}`}
+              } ${cartBump ? "animate-cart-bounce text-[#C49B82]" : ""}`}
               aria-label="Shopping Cart"
               title="Shopping Cart"
             >
               <ShoppingCart
-                className={`w-5 h-5 transition-transform duration-300 active:scale-90 ${
-                  cartBump ? "motion-safe:animate-bounce" : ""
-                }`}
+                className="w-5 h-5 transition-transform duration-200 active:scale-90"
               />
               {cartCount > 0 && (
                 <span
-                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-all duration-300 ${
-                    cartBump ? "scale-125 bg-[#C49B82] ring-2 ring-[#FAF6F2]" : ""
+                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-transform duration-200 ${
+                    cartBump ? "scale-115 bg-[#C49B82]" : ""
                   }`}
                 >
                   {cartCount}
@@ -333,21 +331,19 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
               onClick={() => navigate("checkout")}
               data-header-cart-target="mobile"
               data-header-cart-icon="true"
-              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition-all duration-300 flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
+              className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition-colors duration-200 flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
                 activePage === "checkout" ? "text-[#C49B82]" : ""
-              } ${cartBump ? "scale-115 text-[#C49B82] -rotate-6" : ""}`}
+              } ${cartBump ? "animate-cart-bounce text-[#C49B82]" : ""}`}
               aria-label="Shopping Cart"
               title="Shopping Cart"
             >
               <ShoppingCart
-                className={`w-5 h-5 transition-transform duration-300 active:scale-90 ${
-                  cartBump ? "motion-safe:animate-bounce" : ""
-                }`}
+                className="w-5 h-5 transition-transform duration-200 active:scale-90"
               />
               {cartCount > 0 && (
                 <span
-                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-all duration-300 ${
-                    cartBump ? "scale-125 bg-[#C49B82] ring-2 ring-[#FAF6F2]" : ""
+                  className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#CCA893] text-[#111111] text-[10px] font-bold flex items-center justify-center shadow-xs transition-transform duration-200 ${
+                    cartBump ? "scale-115 bg-[#C49B82]" : ""
                   }`}
                 >
                   {cartCount}

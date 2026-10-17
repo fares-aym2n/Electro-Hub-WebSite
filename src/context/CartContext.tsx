@@ -246,37 +246,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setError(null);
 
+      // 1. Immediately trigger the fast visual animation (~240ms) on click
+      flyProductToCart({
+        imageSrc: options?.imageSrc || product.image,
+        sourceElement: options?.sourceElement,
+        startRect: options?.startRect,
+        onArrive: () => {
+          // Subtle, fast cart bounce when product enters the header cart
+          setCartBump(true);
+          if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
+          bumpTimerRef.current = setTimeout(() => {
+            setCartBump(false);
+          }, 280);
+        },
+      });
+
+      // 2. Run backend API request normally in parallel
       try {
         const updatedCart = await cartService.addItem(product.id, quantity);
-
-        // Update badge and trigger bump ONLY after backend confirmation, synchronized with arrival
-        let stateSynced = false;
-        const commitCartUpdate = () => {
-          if (!stateSynced) {
-            stateSynced = true;
-            syncCartState(updatedCart);
-            setCartBump(true);
-            if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
-            bumpTimerRef.current = setTimeout(() => {
-              setCartBump(false);
-            }, 750);
-          }
-        };
-
-        // Trigger flying-product animation directly into header shopping cart
-        flyProductToCart({
-          imageSrc: options?.imageSrc || product.image,
-          sourceElement: options?.sourceElement,
-          startRect: options?.startRect,
-          onArrive: commitCartUpdate,
-        });
-
-        // Safety fallback: ensure badge updates within 900ms even if animation was interrupted
-        setTimeout(commitCartUpdate, 900);
-
+        // 3. Update cart badge only after backend API succeeds
+        syncCartState(updatedCart);
         return true;
       } catch (err: any) {
         console.error(`Failed to add product ${product.id} to cart:`, err);
+        // Stop any active cart bounce on failure
+        setCartBump(false);
         const message = err.message || 'Failed to add item to cart.';
         setError(message);
         triggerCartErrorFeedback(message);
