@@ -2,8 +2,6 @@
 
 > **Live Website:** [https://electro-hub-website.vercel.app](https://electro-hub-website.vercel.app)  
 > **Backend API:** [https://electro-hub-1.vercel.app](https://electro-hub-1.vercel.app)  
-> **GitHub Repository:** [https://github.com/fares-aym2n/Electro-Hub-WebSite](https://github.com/fares-aym2n/Electro-Hub-WebSite)
-
 ---
 
 ## 📌 Project Overview
