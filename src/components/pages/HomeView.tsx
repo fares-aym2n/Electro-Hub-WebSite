@@ -15,7 +15,7 @@ import type { PageId } from "../electro/ElectroHeader";
 import type { ApiProduct } from "../../types/api";
 import { productService } from "../../services/productService";
 import { useNavigation } from "../../context/NavigationContext";
-import { useCart } from "../../context/CartContext";
+import { useCart, type AddToCartOptions } from "../../context/CartContext";
 import { formatPrice } from "../../utils/formatters";
 import { CategoryCarousel } from "../home/CategoryCarousel";
 import { OffersSection } from "../home/OffersSection";
@@ -23,7 +23,11 @@ import { OffersSection } from "../home/OffersSection";
 interface HomeViewProps {
   onNavigate: (page: PageId) => void;
   onSelectProduct: (productId: number) => void;
-  onAddToCart: (product: ApiProduct) => void;
+  onAddToCart: (
+    product: ApiProduct,
+    quantity?: number,
+    options?: AddToCartOptions,
+  ) => Promise<boolean> | void;
 }
 
 export const HomeView: FC<HomeViewProps> = ({
@@ -83,7 +87,6 @@ export const HomeView: FC<HomeViewProps> = ({
   return (
     <div className="bg-[#FBF6F0] min-h-[calc(100vh-140px)] py-6 sm:py-8 lg:py-12">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 space-y-12 sm:space-y-14 lg:space-y-20">
-        
         {/* ========================================================= */}
         {/* 1. HERO SPOTLIGHT BANNER                                  */}
         {/* ========================================================= */}
@@ -104,11 +107,6 @@ export const HomeView: FC<HomeViewProps> = ({
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               {/* Left Content Column */}
               <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] text-[12px] font-bold tracking-[0.08em] text-[#C49B82] uppercase shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Flagship Spotlight
-                </div>
-
                 <h1 className="text-[26px] sm:text-[38px] lg:text-[46px] font-bold text-[#111111] leading-[1.14] tracking-tight">
                   {featuredProduct.name}
                 </h1>
@@ -137,7 +135,25 @@ export const HomeView: FC<HomeViewProps> = ({
                   </button>
 
                   <button
-                    onClick={() => onAddToCart(featuredProduct)}
+                    onClick={(e) => {
+                      const heroImgEl = document.querySelector(
+                        '[data-hero-product-image="true"]',
+                      ) as HTMLElement | null;
+                      const rect = (
+                        heroImgEl || e.currentTarget
+                      ).getBoundingClientRect();
+                      onAddToCart(featuredProduct, 1, {
+                        sourceElement: heroImgEl || e.currentTarget,
+                        startRect: {
+                          left: rect.left,
+                          top: rect.top,
+                          width: rect.width,
+                          height: rect.height,
+                        },
+                        imageSrc:
+                          featuredProduct.image || "/assets/sony-main.jpg",
+                      });
+                    }}
                     disabled={isAddingProduct(featuredProduct.id)}
                     className="h-12 px-6 sm:px-8 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#C49B82] text-[#111111] font-bold text-[13px] tracking-[0.08em] uppercase transition active:scale-98 cursor-pointer text-center flex items-center justify-center gap-2"
                   >
@@ -168,6 +184,7 @@ export const HomeView: FC<HomeViewProps> = ({
                   className="w-full max-w-md h-72 sm:h-96 rounded-2xl flex items-center justify-center p-4 cursor-pointer group relative"
                 >
                   <img
+                    data-hero-product-image="true"
                     src={featuredProduct.image || "/assets/sony-main.jpg"}
                     alt={featuredProduct.name}
                     onError={(e) => {
@@ -195,7 +212,9 @@ export const HomeView: FC<HomeViewProps> = ({
         <section id="offers-section" className="scroll-mt-24">
           <OffersSection
             onSelectProduct={handleProductClick}
-            onAddToCart={(prod) => onAddToCart(prod as ApiProduct)}
+            onAddToCart={(prod, options) =>
+              onAddToCart(prod as ApiProduct, 1, options)
+            }
             onNavigateToOffers={() => navigate("products", { discount: true })}
           />
         </section>
@@ -205,15 +224,13 @@ export const HomeView: FC<HomeViewProps> = ({
         {/* ========================================================= */}
         <section className="rounded-3xl bg-[#EEE9E5] border border-[#E5D7CA] p-8 sm:p-12 text-center space-y-6">
           <div className="max-w-2xl mx-auto space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF6F2] border border-[#DFD4C8] text-[11px] font-bold tracking-[0.08em] text-[#C49B82] uppercase">
-              <Layers className="w-3.5 h-3.5" />
-              Complete Electronics Range
-            </div>
             <h2 className="text-[26px] sm:text-[32px] font-bold text-[#111111] tracking-tight">
               Looking for Something Specific?
             </h2>
             <p className="text-[14px] sm:text-[15px] text-[#555555] leading-relaxed">
-              Explore our full collection with advanced filtering by category, dual-handle price range slider, customer ratings, and in-stock availability.
+              Explore our full collection with advanced filtering by category,
+              dual-handle price range slider, customer ratings, and in-stock
+              availability.
             </p>
           </div>
 
@@ -255,7 +272,8 @@ export const HomeView: FC<HomeViewProps> = ({
                 100% Genuine Tech
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
-                Authentic branded electronics directly backed by official warranties.
+                Authentic branded electronics directly backed by official
+                warranties.
               </p>
             </div>
           </div>
@@ -269,7 +287,8 @@ export const HomeView: FC<HomeViewProps> = ({
                 Fast Nationwide Delivery
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
-                Prompt dispatch across Cairo, Alexandria, and all Egyptian governorates.
+                Prompt dispatch across Cairo, Alexandria, and all Egyptian
+                governorates.
               </p>
             </div>
           </div>
@@ -283,7 +302,8 @@ export const HomeView: FC<HomeViewProps> = ({
                 Flexible Payment
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
-                Cash on delivery, debit/credit cards, and easy ValU installment plans.
+                Cash on delivery, debit/credit cards, and easy ValU installment
+                plans.
               </p>
             </div>
           </div>
@@ -297,12 +317,12 @@ export const HomeView: FC<HomeViewProps> = ({
                 Dedicated Support
               </h4>
               <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">
-                Daily assistance from 9:00 AM to 10:00 PM via live chat and phone.
+                Daily assistance from 9:00 AM to 10:00 PM via live chat and
+                phone.
               </p>
             </div>
           </div>
         </section>
-
       </div>
     </div>
   );

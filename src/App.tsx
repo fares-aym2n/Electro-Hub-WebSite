@@ -19,7 +19,7 @@ import { OrdersView } from './components/pages/OrdersView';
 import { AuthModal } from './components/auth/AuthModal';
 import { CartToast } from './components/common/CartToast';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { CartProvider, useCart } from './context/CartContext';
+import { CartProvider, useCart, type AddToCartOptions } from './context/CartContext';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { NavigationProvider, useNavigation, type PageId } from './context/NavigationContext';
 import type { ApiProduct } from './types/api';
@@ -56,8 +56,12 @@ function AppContent() {
     navigate('product-details', { productId: id });
   };
 
-  const handleAddToCart = (product: ApiProduct, quantity: number = 1) => {
-    return addToCart(product, quantity);
+  const handleAddToCart = (
+    product: ApiProduct,
+    quantity: number = 1,
+    options?: AddToCartOptions
+  ) => {
+    return addToCart(product, quantity, options);
   };
 
   return (
@@ -71,7 +75,7 @@ function AppContent() {
           <HomeView
             onNavigate={handleNavigate}
             onSelectProduct={handleSelectProduct}
-            onAddToCart={(prod) => handleAddToCart(prod, 1)}
+            onAddToCart={handleAddToCart}
           />
         )}
 
@@ -79,7 +83,7 @@ function AppContent() {
           <ProductListingView
             onNavigate={handleNavigate}
             onSelectProduct={handleSelectProduct}
-            onAddToCart={(prod) => handleAddToCart(prod, 1)}
+            onAddToCart={(prod, options) => handleAddToCart(prod, 1, options)}
           />
         )}
 
@@ -110,7 +114,7 @@ function AppContent() {
           <WishlistView
             onNavigate={handleNavigate}
             onSelectProduct={handleSelectProduct}
-            onAddToCart={(prod) => handleAddToCart(prod, 1)}
+            onAddToCart={(prod, options) => handleAddToCart(prod, 1, options)}
           />
         )}
 

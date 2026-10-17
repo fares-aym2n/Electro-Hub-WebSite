@@ -278,6 +278,8 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             {/* Shopping Cart Button with Icon */}
             <button
               onClick={() => navigate("checkout")}
+              data-header-cart-target="desktop"
+              data-header-cart-icon="true"
               className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition-all duration-300 flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
                 activePage === "checkout" ? "text-[#C49B82]" : ""
               } ${cartBump ? "scale-115 text-[#C49B82] -rotate-6" : ""}`}
@@ -329,6 +331,8 @@ export const ElectroHeader: FC<ElectroHeaderProps> = ({ cartCount: propCartCount
             {/* Shopping Cart Button on Mobile */}
             <button
               onClick={() => navigate("checkout")}
+              data-header-cart-target="mobile"
+              data-header-cart-icon="true"
               className={`relative p-2 rounded-full hover:bg-[#E5D7CA] transition-all duration-300 flex items-center justify-center text-[#111111] hover:text-[#C49B82] cursor-pointer ${
                 activePage === "checkout" ? "text-[#C49B82]" : ""
               } ${cartBump ? "scale-115 text-[#C49B82] -rotate-6" : ""}`}

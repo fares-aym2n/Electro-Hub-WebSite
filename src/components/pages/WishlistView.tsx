@@ -15,14 +15,14 @@ import type { PageId } from '../electro/ElectroHeader';
 import type { ApiProduct } from '../../types/api';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
+import { useCart, type AddToCartOptions } from '../../context/CartContext';
 import { calculateDiscountPricing } from '../../services/offersService';
 import { formatPrice, formatRating } from '../../utils/formatters';
 
 interface WishlistViewProps {
   onNavigate: (page: PageId) => void;
   onSelectProduct: (productId: number) => void;
-  onAddToCart: (product: ApiProduct) => void;
+  onAddToCart: (product: ApiProduct, options?: AddToCartOptions) => void;
 }
 
 export const WishlistView: FC<WishlistViewProps> = ({
@@ -220,6 +220,7 @@ export const WishlistView: FC<WishlistViewProps> = ({
               return (
                 <div
                   key={product.id}
+                  data-product-card="true"
                   className="bg-[#EEE9E5] rounded-3xl p-5 flex flex-col justify-between hover:shadow-md transition duration-300 group border border-transparent hover:border-[#E5D7CA] relative"
                 >
                   {/* Visual Container */}
@@ -318,7 +319,21 @@ export const WishlistView: FC<WishlistViewProps> = ({
                         return (
                           <button
                             type="button"
-                            onClick={() => onAddToCart(product)}
+                            onClick={(e) => {
+                              const cardEl = e.currentTarget.closest('[data-product-card]') as HTMLElement | null;
+                              const imgEl = (cardEl?.querySelector('img') as HTMLElement | null) || (e.currentTarget as HTMLElement);
+                              const rect = imgEl.getBoundingClientRect();
+                              onAddToCart(product, {
+                                sourceElement: imgEl,
+                                startRect: {
+                                  left: rect.left,
+                                  top: rect.top,
+                                  width: rect.width,
+                                  height: rect.height,
+                                },
+                                imageSrc: product.image || '/assets/sony-main.jpg',
+                              });
+                            }}
                             disabled={product.stockQuantity <= 0}
                             className={`h-10 px-4 rounded-xl font-bold text-[11px] tracking-[0.08em] uppercase transition-all duration-200 active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer ${
                               product.stockQuantity <= 0

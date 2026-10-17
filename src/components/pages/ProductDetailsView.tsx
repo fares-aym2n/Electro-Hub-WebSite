@@ -18,7 +18,7 @@ import { productService } from '../../services/productService';
 import { reviewService } from '../../services/reviewService';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
+import { useCart, type AddToCartOptions } from '../../context/CartContext';
 import { formatPrice, formatRating, formatDate } from '../../utils/formatters';
 import { BackButton } from '../common/BackButton';
 import { EditReviewModal } from '../reviews/EditReviewModal';
@@ -27,7 +27,11 @@ import { DeleteReviewModal } from '../reviews/DeleteReviewModal';
 interface ProductDetailsViewProps {
   productId?: number;
   onNavigate: (page: PageId) => void;
-  onAddToCart: (product: ApiProduct, quantity: number) => Promise<boolean> | void;
+  onAddToCart: (
+    product: ApiProduct,
+    quantity: number,
+    options?: AddToCartOptions
+  ) => Promise<boolean> | void;
 }
 
 export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
@@ -193,9 +197,24 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
     }, 4000);
   };
 
-  const handleAdd = async () => {
+  const handleAdd = async (e?: React.MouseEvent) => {
     if (!product) return;
-    const res = await onAddToCart(product, quantity);
+    const mainImgEl = document.querySelector('[data-product-main-image="true"]') as HTMLElement | null;
+    const fallbackEl = (e?.currentTarget as HTMLElement | null) || mainImgEl;
+    const rect = (mainImgEl || fallbackEl)?.getBoundingClientRect();
+
+    const res = await onAddToCart(product, quantity, {
+      sourceElement: mainImgEl || fallbackEl,
+      startRect: rect
+        ? {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+          }
+        : null,
+      imageSrc: currentDisplayImage,
+    });
     if (res !== false) {
       setAddedNotice(true);
       setTimeout(() => setAddedNotice(false), 2500);
@@ -204,7 +223,20 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
 
   const handleBuyNow = () => {
     if (!product) return;
-    onAddToCart(product, quantity);
+    const mainImgEl = document.querySelector('[data-product-main-image="true"]') as HTMLElement | null;
+    const rect = mainImgEl?.getBoundingClientRect();
+    onAddToCart(product, quantity, {
+      sourceElement: mainImgEl,
+      startRect: rect
+        ? {
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+          }
+        : null,
+      imageSrc: currentDisplayImage,
+    });
     onNavigate('checkout');
   };
 
@@ -301,6 +333,7 @@ export const ProductDetailsView: FC<ProductDetailsViewProps> = ({
             {/* Main Image Showcase Card */}
             <div className="flex-1 bg-[#EEE9E5] rounded-3xl p-4 sm:p-8 flex items-center justify-center min-h-[300px] sm:min-h-[440px] relative">
               <img
+                data-product-main-image="true"
                 src={currentDisplayImage}
                 alt={product.name}
                 onError={(e) => {

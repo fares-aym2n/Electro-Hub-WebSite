@@ -63,7 +63,17 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
 
     try {
       const data = await orderService.getMyOrders();
-      setOrders(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else if (
+        data &&
+        typeof data === "object" &&
+        Array.isArray((data as any).orders)
+      ) {
+        setOrders((data as any).orders);
+      } else {
+        setOrders([]);
+      }
     } catch (err: any) {
       console.error('Failed to load user orders:', err);
       setError(
@@ -208,7 +218,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
         <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 flex items-center justify-between text-xs font-semibold text-[#555555]">
           <div className="flex items-center gap-2">
             <span
-              onClick={() => onNavigate('home')}
+              onClick={() => onNavigate("home")}
               className="hover:text-[#C49B82] cursor-pointer transition uppercase"
             >
               Home
@@ -216,18 +226,16 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
             <ChevronRight className="w-3.5 h-3.5 text-[#AAAAAA]" />
             <span className="text-[#111111] uppercase">Order History</span>
           </div>
-
-          <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#777777]">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Authenticated Customer Dashboard</span>
-          </div>
         </div>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-10 lg:px-14 pt-6 sm:pt-8">
         {/* Back Navigation */}
         <div className="mb-2">
-          <BackButton label="Back to Shopping" onClick={() => onNavigate('products')} />
+          <BackButton
+            label="Back to Shopping"
+            onClick={() => onNavigate("products")}
+          />
         </div>
 
         {/* 2. Page Header & Actions */}
@@ -239,7 +247,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
               </span>
               {user && (
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EEE9E5] border border-[#DFD4C8] font-mono font-bold text-[#111111]">
-                  {orders.length} {orders.length === 1 ? 'Order' : 'Orders'}
+                  {orders.length} {orders.length === 1 ? "Order" : "Orders"}
                 </span>
               )}
             </div>
@@ -247,8 +255,8 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
               My Orders
             </h1>
             <p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-xl">
-              Track active hardware shipments, inspect verified invoices, and review your order
-              details.
+              Track active hardware shipments, inspect verified invoices, and
+              review your order details.
             </p>
           </div>
 
@@ -262,14 +270,14 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                 title="Refresh Order List"
               >
                 <RefreshCw
-                  className={`w-3.5 h-3.5 text-[#C49B82] ${refreshing ? 'animate-spin' : ''}`}
+                  className={`w-3.5 h-3.5 text-[#C49B82] ${refreshing ? "animate-spin" : ""}`}
                 />
-                <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+                <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => onNavigate('products')}
+                onClick={() => onNavigate("products")}
                 className="px-5 py-2.5 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-98"
               >
                 <span>Browse Products</span>
@@ -317,15 +325,16 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                 Sign In to View Your Orders
               </h2>
               <p className="text-xs sm:text-sm text-[#666666] max-w-md mx-auto leading-relaxed">
-                Your order history is private and tied directly to your authenticated customer
-                profile. Please sign in to review your purchases and track shipments.
+                Your order history is private and tied directly to your
+                authenticated customer profile. Please sign in to review your
+                purchases and track shipments.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <button
                 type="button"
-                onClick={() => openAuthModal('signin')}
+                onClick={() => openAuthModal("signin")}
                 className="h-12 px-8 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase flex items-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
               >
                 <span>Sign In to Your Account</span>
@@ -333,7 +342,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate('products')}
+                onClick={() => onNavigate("products")}
                 className="h-12 px-6 rounded-xl bg-[#FAF6F2] hover:bg-[#EAE0D5] border border-[#DFD4C8] text-[#111111] font-semibold text-[13px] tracking-[0.06em] uppercase transition cursor-pointer"
               >
                 Browse Catalog
@@ -347,8 +356,12 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
               <AlertCircle className="w-8 h-8" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-bold text-[#111111]">Unable to Retrieve Orders</h3>
-              <p className="text-xs sm:text-sm text-[#666666] leading-relaxed">{error}</p>
+              <h3 className="text-xl font-bold text-[#111111]">
+                Unable to Retrieve Orders
+              </h3>
+              <p className="text-xs sm:text-sm text-[#666666] leading-relaxed">
+                {error}
+              </p>
             </div>
             <button
               type="button"
@@ -370,15 +383,16 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                 No Orders Yet
               </h2>
               <p className="text-xs sm:text-sm text-[#666666] max-w-md mx-auto leading-relaxed">
-                You haven't placed any orders with Electro Hub yet. Explore our premier hardware
-                spotlight, headphones, displays, and accessories to get started.
+                You haven't placed any orders with Electro Hub yet. Explore our
+                premier hardware spotlight, headphones, displays, and
+                accessories to get started.
               </p>
             </div>
 
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => onNavigate('products')}
+                onClick={() => onNavigate("products")}
                 className="h-12 px-8 rounded-xl bg-[#CCA893] hover:bg-[#C29D87] text-[#1A1A1A] font-bold text-[13px] tracking-[0.08em] uppercase inline-flex items-center gap-2 transition active:scale-98 shadow-xs cursor-pointer"
               >
                 <Package className="w-4 h-4" />
@@ -394,12 +408,12 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
               {(
                 [
-                  { id: 'all', label: 'All Orders' },
-                  { id: 'pending', label: 'Pending' },
-                  { id: 'confirmed', label: 'Confirmed' },
-                  { id: 'shipped', label: 'Shipped' },
-                  { id: 'delivered', label: 'Delivered' },
-                  { id: 'cancelled', label: 'Cancelled' },
+                  { id: "all", label: "All Orders" },
+                  { id: "pending", label: "Pending" },
+                  { id: "confirmed", label: "Confirmed" },
+                  { id: "shipped", label: "Shipped" },
+                  { id: "delivered", label: "Delivered" },
+                  { id: "cancelled", label: "Cancelled" },
                 ] as const
               ).map((tab) => {
                 const count = orderCounts[tab.id];
@@ -411,16 +425,16 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                     onClick={() => setActiveTab(tab.id)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer uppercase tracking-wider ${
                       isActive
-                        ? 'bg-[#111111] text-[#FAF6F2] shadow-xs'
-                        : 'bg-[#EEE9E5] hover:bg-[#E5D7CA] text-[#555555] border border-[#DFD4C8]'
+                        ? "bg-[#111111] text-[#FAF6F2] shadow-xs"
+                        : "bg-[#EEE9E5] hover:bg-[#E5D7CA] text-[#555555] border border-[#DFD4C8]"
                     }`}
                   >
                     <span>{tab.label}</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                         isActive
-                          ? 'bg-[#CCA893] text-[#111111]'
-                          : 'bg-[#FAF6F2] text-[#777777]'
+                          ? "bg-[#CCA893] text-[#111111]"
+                          : "bg-[#FAF6F2] text-[#777777]"
                       }`}
                     >
                       {count}
@@ -433,14 +447,17 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
             {/* Filtered Orders Count Alert if tab empty */}
             {filteredOrders.length === 0 ? (
               <div className="rounded-2xl bg-[#EEE9E5] border border-[#DFD4C8] p-8 text-center text-xs text-[#666666]">
-                No orders found under the <strong className="capitalize">{activeTab}</strong> tab.
+                No orders found under the{" "}
+                <strong className="capitalize">{activeTab}</strong> tab.
               </div>
             ) : (
               <div className="space-y-6">
                 {filteredOrders.map((order) => {
                   const totalPrice = Number(order.totalPrice || 0);
                   const orderRef = `#EH-${order.id}-2026`;
-                  const hasItems = Array.isArray(order.orderItems) && order.orderItems.length > 0;
+                  const hasItems =
+                    Array.isArray(order.orderItems) &&
+                    order.orderItems.length > 0;
 
                   return (
                     <div
@@ -472,7 +489,10 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                          {renderPaymentStatusBadge(order.paymentStatus, order.paymentMethod)}
+                          {renderPaymentStatusBadge(
+                            order.paymentStatus,
+                            order.paymentMethod,
+                          )}
                           {renderOrderStatusBadge(order.status)}
                         </div>
                       </div>
@@ -487,7 +507,9 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                               <User className="w-3.5 h-3.5 text-[#C49B82]" />
                               <span>Recipient</span>
                             </div>
-                            <div className="font-bold text-[#111111]">{order.fullName}</div>
+                            <div className="font-bold text-[#111111]">
+                              {order.fullName}
+                            </div>
                             <div className="text-[#666666] flex items-center gap-1">
                               <Phone className="w-3 h-3 text-[#999999]" />
                               <span>{order.phoneNumber}</span>
@@ -517,7 +539,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                               {formatPrice(totalPrice)}
                             </div>
                             <div className="text-[11px] text-[#666666] flex sm:justify-end items-center gap-1">
-                              {order.paymentMethod === 'card' ? (
+                              {order.paymentMethod === "card" ? (
                                 <>
                                   <CreditCard className="w-3 h-3 text-[#C49B82]" />
                                   <span>Credit / Debit Card (Stripe)</span>
@@ -547,7 +569,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                                 const itemTotal = unitPrice * item.quantity;
                                 const prodImage =
                                   item.product?.image ||
-                                  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80';
+                                  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80";
 
                                 return (
                                   <div
@@ -561,8 +583,10 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                                           alt={item.productName}
                                           className="w-full h-full object-contain"
                                           onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).src =
-                                              'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80';
+                                            (
+                                              e.currentTarget as HTMLImageElement
+                                            ).src =
+                                              "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&auto=format&fit=crop&q=80";
                                           }}
                                         />
                                       </div>
@@ -576,7 +600,9 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                                             Qty: {item.quantity}
                                           </span>
                                           <span>•</span>
-                                          <span>Unit: {formatPrice(unitPrice)}</span>
+                                          <span>
+                                            Unit: {formatPrice(unitPrice)}
+                                          </span>
                                           {item.discount > 0 && (
                                             <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
                                               {item.discount}% OFF
@@ -595,7 +621,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                                           type="button"
                                           onClick={() => {
                                             onSelectProduct(item.product!.id);
-                                            onNavigate('product-details');
+                                            onNavigate("product-details");
                                           }}
                                           className="text-[10px] text-[#C49B82] hover:underline font-bold uppercase tracking-wider inline-flex items-center gap-0.5 mt-1 cursor-pointer"
                                         >
@@ -615,10 +641,10 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                       {/* Footer Actions */}
                       <div className="px-5 sm:px-6 py-3.5 bg-[#FAF6F2]/50 border-t border-[#DFD4C8] flex flex-wrap items-center justify-between gap-3 text-xs">
                         <div className="text-[#777777] text-[11px]">
-                          Need help with this order?{' '}
+                          Need help with this order?{" "}
                           <button
                             type="button"
-                            onClick={() => onNavigate('contact')}
+                            onClick={() => onNavigate("contact")}
                             className="font-bold text-[#111111] hover:text-[#C49B82] underline cursor-pointer"
                           >
                             Contact Support
@@ -628,7 +654,7 @@ export const OrdersView: FC<OrdersViewProps> = ({ onNavigate, onSelectProduct })
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => onNavigate('products')}
+                            onClick={() => onNavigate("products")}
                             className="px-4 py-2 rounded-xl bg-[#FAF6F2] hover:bg-[#E5D7CA] border border-[#DFD4C8] text-[#111111] font-bold text-[11px] uppercase tracking-wider transition cursor-pointer"
                           >
                             Shop Similar

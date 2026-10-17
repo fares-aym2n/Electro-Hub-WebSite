@@ -3,11 +3,18 @@ import type { ApiProduct, ApiCart } from '../types/api';
 import { cartService } from '../services/cartService';
 import { useAuth } from './AuthContext';
 import { calculateDiscountPricing } from '../services/offersService';
+import { flyProductToCart } from '../utils/flyToCart';
 
 export interface CartItem {
   id?: number;
   product: ApiProduct;
   quantity: number;
+}
+
+export interface AddToCartOptions {
+  sourceElement?: HTMLElement | null;
+  startRect?: { left: number; top: number; width: number; height: number } | null;
+  imageSrc?: string;
 }
 
 export interface CartContextType {
@@ -23,7 +30,11 @@ export interface CartContextType {
   cartErrorNotice: string | null;
   dismissErrorNotice: () => void;
   isAddingProduct: (productId: number) => boolean;
-  addToCart: (product: ApiProduct, quantity?: number) => Promise<boolean>;
+  addToCart: (
+    product: ApiProduct,
+    quantity?: number,
+    options?: AddToCartOptions
+  ) => Promise<boolean>;
   removeFromCart: (productId: number) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -86,29 +97,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     errorNoticeTimerRef.current = setTimeout(() => {
       setCartErrorNotice(null);
     }, 4500);
-  }, []);
-
-  const triggerCartFeedback = useCallback((product: ApiProduct, quantity: number) => {
-    // Dismiss any error toast
-    setCartErrorNotice(null);
-    if (errorNoticeTimerRef.current) {
-      clearTimeout(errorNoticeTimerRef.current);
-      errorNoticeTimerRef.current = null;
-    }
-
-    // 1. Trigger cart icon animation bump
-    setCartBump(true);
-    if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
-    bumpTimerRef.current = setTimeout(() => {
-      setCartBump(false);
-    }, 750);
-
-    // 2. Trigger floating notification toast
-    setLastAddedNotice({ product, quantity });
-    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
-    noticeTimerRef.current = setTimeout(() => {
-      setLastAddedNotice(null);
-    }, 3500);
   }, []);
 
   const isAddingProduct = useCallback(
@@ -241,7 +229,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 2. Add item to cart: POST /api/carts/:productId (allows multiple clicks & increments quantity)
   const addToCart = useCallback(
-    (product: ApiProduct, quantity: number = 1): Promise<boolean> => {
+    (
+      product: ApiProduct,
+      quantity: number = 1,
+      options?: AddToCartOptions
+    ): Promise<boolean> => {
       if (!user) {
         openAuthModal('signin');
         return Promise.resolve(false);
@@ -275,7 +267,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const updatedCart = await cartService.addItem(product.id, quantity);
             syncCartState(updatedCart);
-            triggerCartFeedback(product, quantity);
+
+            // Trigger flying-product animation directly into header shopping cart
+            flyProductToCart({
+              imageSrc: options?.imageSrc || product.image,
+              sourceElement: options?.sourceElement,
+              startRect: options?.startRect,
+              onArrive: () => {
+                // Header cart bump animation and badge pop when product enters cart
+                setCartBump(true);
+                if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current);
+                bumpTimerRef.current = setTimeout(() => {
+                  setCartBump(false);
+                }, 750);
+              },
+            });
+
             return true;
           } catch (err: any) {
             console.error(`Failed to add product ${product.id} to cart:`, err);
@@ -300,7 +307,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       productQueuesRef.current.set(product.id, nextPromise);
       return nextPromise;
     },
-    [user, openAuthModal, syncCartState, triggerCartFeedback, triggerCartErrorFeedback, refreshCart]
+    [user, openAuthModal, syncCartState, triggerCartErrorFeedback, refreshCart]
   );
 
   // 5. Clear cart: DELETE /api/carts (204 No Content)
